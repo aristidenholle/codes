@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_page_transition/flutter_page_transition.dart';
 import 'package:marquee/marquee.dart';
 import 'package:gzapp/pages/client/validatepage.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'ordertrack.dart';
 
@@ -18,6 +19,11 @@ class ClientHomePage extends StatefulWidget {
 }
 
 class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStateMixin{
+
+  //TO AVOID MANY READ IN DB
+  String keyToCheckIFValueItSaved = "keyName";
+  String gzNumber = "gzsNumber";
+
   Map<String, List> gzsList = {};
 
   Map<String, List> gzChosen = {};
@@ -228,7 +234,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
 //TO AVOID MANY READ IN FIREBASE
 
   void setData({Map<String, List> gzList}) async{
-
+    SharedPreferences preferences = await SharedPreferences.getInstance();
   }
 
 }
