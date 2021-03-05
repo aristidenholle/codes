@@ -222,4 +222,10 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
   return lgz;
 }
 
+//TO AVOID MANY READ IN FIREBASE
+
+  void setData({Map<String, List> gzList}) async{
+
+  }
+
 }
