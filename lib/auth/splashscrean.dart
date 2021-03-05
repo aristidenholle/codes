@@ -122,7 +122,7 @@ class _SplashScreenPageState extends State<SplashScreenPage> {
             Container(
               decoration: BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('images/gzgift.gif')
+                  image: AssetImage('images/giphygzempty.gif')
                 )
               ),
             ),
@@ -159,7 +159,9 @@ signUorLogin() async{
       print('D id ${deviceInfo.androidId}');
       FirebaseAuth.instance.createUserWithEmailAndPassword(
           email: "${deviceInfo.androidId}@gmail.com",
-          password: pass).then((value) {
+          password: pass)
+          .timeout(Duration(seconds: 15), onTimeout: timeOut)
+          .then((value) {
       print('U id ${value.user.uid}');
         Navigator.pushReplacement(context, PageTransition(
             child: new ClientHomePage(),
@@ -170,6 +172,7 @@ signUorLogin() async{
         if (authError.toString().contains('email-already-in-use')) {
           FirebaseAuth.instance.signInWithEmailAndPassword(
               email: "${deviceInfo.androidId}@gmail.com", password: pass)
+              .timeout(Duration(seconds: 15), onTimeout: timeOut)
           .then((value){
             Navigator.pushReplacement(context,
                 PageTransition(
@@ -488,9 +491,8 @@ signUorLogin() async{
 
   Future<Null> timeOut() {
     setState(() {
-      hideDialIcon = false;
+      showLoginButton = false;
     });
-    loginButtonState.sink.add(false);
     return Fluttertoast.showToast(
             msg: "Vérifiez votre connexion internet",
             textColor: Colors.white,
@@ -910,4 +912,6 @@ void oneSignalConfig() async {
     }
     return null;
   }
+
+
 }

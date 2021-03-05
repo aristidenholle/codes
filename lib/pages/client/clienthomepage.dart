@@ -23,6 +23,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
   //TO AVOID MANY READ IN DB
   String keyToCheckIFValueItSaved = "keyName";
   String gzNumber = "gzsNumber";
+  Map<String, List> persistentStore = {};
 
   Map<String, List> gzsList = {};
 
@@ -33,6 +34,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
 
   @override
   void initState() {
+    checkIfFirstGzNameSaved();
     super.initState();
   }
 
@@ -238,10 +240,10 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       set.setString("keyName$i", gzsList.keys.toList()[i]);
     }
     for(var i = 0; i < gzsList.keys.length; i++){
-      set.setString("keyBool$i", gzsList[gzsList.keys.toList()[i]][0]);
+      set.setBool("keyBool$i", gzsList[gzsList.keys.toList()[i]][0]);
     }
     for(var i = 0; i < gzsList.keys.length; i++){
-      set.setString("keyPrice$i", gzsList[gzsList.keys.toList()[i]][1]);
+      set.setInt("keyPrice$i", gzsList[gzsList.keys.toList()[i]][1]);
     }
 
     for(var i = 0; i < gzsList.keys.length; i++){
@@ -254,16 +256,18 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
   getData() async{
     SharedPreferences get = await SharedPreferences.getInstance();
     var getFirstKeyName = get.getString(keyToCheckIFValueItSaved);
-    var getGzNumber = get.getString(gzNumber);
+    var getGzNumber = get.getInt(gzNumber);
     print('DATA $getFirstKeyName, $getGzNumber');
 
+    //({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage']]});
     for(var i = 0; i < gzsList.keys.length; i++){
       var getGzName = get.getString("keyName$i");
       if(getGzName != null){
         print('DATA :$getGzName');
+        persistentStore.addAll({});
       }
     }
-    for(var i = 0; i < gzsList.keys.length; i++){
+/*    for(var i = 0; i < gzsList.keys.length; i++){
       var getGzBool = get.getString("keyBool$i");
       if(getGzBool != null){
         print('DATA :$getGzBool');
@@ -281,7 +285,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       if(getGzImg != null){
         print('DATA :$getGzImg');
       }
-    }
+    }*/
 
   }
 
@@ -298,7 +302,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
           .get().then((value){
         for(QueryDocumentSnapshot gz in value.docs){
           setState(() {
-            gzsList.addAll({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage']]});
+            gzsList.addAll({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage'], 1]});
           });
         }
 
