@@ -15,6 +15,7 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
       appBar: AppBar(
         elevation: 0.0,
         title: Text('Votre commande'),
+        centerTitle: true,
       ),
 
       body: Container(
@@ -96,24 +97,22 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
   List<Widget> buildGzChoice({Map<String, dynamic> order }){
     List<Widget> lgz = [];
     for(var i = 0; i < order.keys.length;  i++){
-      Widget g = Card(
-        child: Container(
-          height: 70,
-          width: MediaQuery.of(context).size.width,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Container(
-                child: Text('${order[order.keys.toList()[i]][1]}'),
-              ),
-              Container(
-                child: Text('${order.keys.toList()[i]}'),
-              ),
-              Container(
-                child: Text('${order[order.keys.toList()[i]][0]}'),
-              ),
-            ],
-          ),
+      Widget g = Container(
+        height: 70,
+        width: MediaQuery.of(context).size.width,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            Container(
+              child: Text('${order[order.keys.toList()[i]][1]}'),
+            ),
+            Container(
+              child: Text('${order.keys.toList()[i]}'),
+            ),
+            Container(
+              child: Text('${order[order.keys.toList()[i]][0]}'),
+            ),
+          ],
         ),
       );
 

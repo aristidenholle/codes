@@ -133,7 +133,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
             ((persistentStore.keys.length >=1 && persistentStore[persistentStore.keys.toList().first][0] == true) ||
            ( gzsList.keys.length >=1 && gzsList[gzsList.keys.toList().first][0] == true ))?*/
         Container(
-          height: 45,
+          height: 0,
           child: Text(''),
         )
             : Container(

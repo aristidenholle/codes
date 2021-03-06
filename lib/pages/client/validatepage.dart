@@ -3,12 +3,14 @@ import 'package:animate_do/animate_do.dart ' as fade;
 import 'package:animate_do/animate_do.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:date_time_picker/date_time_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:phone_number/phone_number.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 class ValidateOrderPage extends StatefulWidget {
   final userName, userCommune, userQuarter, userFirstNumber, userSecondNumber, userCity;
@@ -46,6 +48,8 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
   TextEditingController editCommuneQuarterController = new TextEditingController();
   FocusNode editCommuneOrQuarterControllerFocus = new FocusNode();
   bool cityInputError = false;
+
+  bool userDataNotDefined = false;
 
   int citySelected;
   String cityChosen;
@@ -104,9 +108,32 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
     'Autre'
   ];
 
+  int reservationTypeSelected;
+  static List<String> reservationType = [
+    'Maintenant',
+    "Reservation à l\'avance",
+  ];
+  String reservationTypeChosen = reservationType[0];
+
+  List<DropdownMenuItem<String>> drop = reservationType.map(
+          (value) => DropdownMenuItem(child: Text(value), value: value)).toList();
+
+
+  bool hourOrDayReservationNotChoose = false;
+  String hourReservation;
+  var hourReservationChoice;
+
+  String reservationDay;
+  var reservationDayChoice;
+
   _ValidateOrderPageState({this.listGzChosen});
 
 
+  @override
+  void initState() {
+    initializeDateFormatting('fr_FR', null);
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -154,6 +181,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                       );
                     }
                     return Card(
+                      color: userDataNotDefined == true ? Colors.red[100] : Colors.white,
                       child: Column(
                         children: [
                           Container(
@@ -254,7 +282,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
               ),
 
               Padding(
-                padding: const EdgeInsets.only(top: 25),
+                padding: const EdgeInsets.only(top: 5),
                 child: SingleChildScrollView(
                   child: Column(
                     children: buildGzChoice(),
@@ -263,7 +291,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
               ),
 
               Padding(
-                padding: const EdgeInsets.only(top: 40),
+                padding: const EdgeInsets.only(top: 15),
                 child: Container(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -276,7 +304,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
               ),
 
               Padding(
-                padding: const EdgeInsets.only(top: 35),
+                padding: const EdgeInsets.only(top: 25),
                 child: Container(
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -284,6 +312,91 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                       Text('PRIX TOTAL: ${price(price: getAllPrice())}'),
                     ],
                   ),
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.only(top: 15),
+                child: Container(
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.start,
+                        children: [
+                          Text('DELAI DE LIVRAISON'),
+                        ],
+                      ),
+
+                      Card(
+                        child: Container(
+                          width: 250,
+                          child: Center(
+                            child: DropdownButton(
+                              underline: Text(''),
+                              hint: Text('$reservationTypeChosen'),
+                              onChanged: (String value){
+                                setState(() {
+                                  reservationTypeChosen = value;
+                                });
+                              },
+                              items: drop),
+                          ),
+                        ),
+                      ),
+
+                       (reservationTypeChosen.contains('Maintenant'))//lol
+                          ? Container(
+                          height: 30.0,
+                          child: Center(
+                              child: Text(
+                                  'LIVRAISON IMMEDIATE'
+                                      .toUpperCase(),
+                                  style: TextStyle(
+                                      fontWeight:
+                                      FontWeight.bold,
+                                      fontSize: 17.0))))
+                          :  Row(
+                         mainAxisAlignment: MainAxisAlignment.spaceAround,
+                         children: [
+                           TextButton.icon(
+                               onPressed: () {
+                                 return giveYourReservationDay();
+                               },
+                               icon: Icon(Icons.date_range, color: Colors.green),
+                               label: (reservationDayChoice == null)
+                                   ? Text('Jour'.toUpperCase(),
+                                   style: TextStyle())
+                                   : Text(
+                                   '${reservationDay.toUpperCase()}',
+                                   style: TextStyle(
+                                       fontWeight:
+                                       FontWeight
+                                           .bold,
+                                       fontSize: 17.0))),
+
+                           TextButton.icon(
+                               onPressed: () {
+                                 return giveYourReservationTime();
+                               },
+                               icon: Icon(Icons.timer,
+                                   color: Colors.green),
+                               label: (hourReservationChoice == null)
+                                   ? Text(
+                                   'Heure'
+                                       .toUpperCase(),
+                                   style: TextStyle())
+                                   : Text(
+                                   '${hourReservation.toUpperCase()}',
+                                   style: TextStyle(
+                                       fontWeight:
+                                       FontWeight
+                                           .bold,
+                                       fontSize: 17.0)))
+                         ],
+                       )
+
+                    ],
+                  )
                 ),
               ),
 
@@ -296,8 +409,33 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
           height: 45,
           child: TextButton(
               onPressed: () {
-                //return alertToShow(msg: "Vous confirmez votre achat?");
-
+                FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser.uid)
+                    .get()
+                    .then((value){
+                      if(value.data() != null && value.data()['userName'].toString().isNotEmpty && value.data()['phoneNumber'].toString().isNotEmpty &&
+                          value.data()['userLocation'].toString().isNotEmpty){
+                        if(reservationTypeChosen == "Maintenant"){
+                          return alertToShow(msg: "Vous confirmez votre achat?",
+                              userNumber: value.data()['phoneNumber'],userLocation: value.data()['userLocation'],
+                              userSecondNumber: value.data()['secondNumber'],userName: value.data()['userName']);
+                        }else{
+                          if(reservationDay != null && hourReservation != null){
+                            return alertToShow(msg: "Vous confirmez votre achat?",
+                                userNumber: value.data()['phoneNumber'],userLocation: value.data()['userLocation'],
+                                userSecondNumber: value.data()['secondNumber'],userName: value.data()['userName']);
+                          }else{
+                            return validate(errorMsg: "Définissez la date de livraison.");
+                          }
+                        }
+                      }else{
+                        setState(() {
+                          userDataNotDefined = true;
+                        });
+                        return validate(errorMsg: "Veuillez définir vos infos.");
+                      }
+                }).catchError((err){
+                  print('ERROR $err');
+                });
               },
               child: Text('Valider',style: TextStyle(color: Colors.white))),
         ),
@@ -313,7 +451,9 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
         price = price + value[0];
       });
     });
-    totalPrice = price;
+    setState(() {
+      totalPrice = price;
+    });
 
     return totalPrice + 500;
   }
@@ -326,7 +466,9 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
             price = price + value[0];
           });
     });
-    totalGzPrice = price;
+    setState(() {
+      totalGzPrice = price;
+    });
 
     return totalGzPrice;
   }
@@ -572,7 +714,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
 
 
 
-  alertToShow({String msg}){
+  alertToShow({String msg, String userName, String userLocation,String userNumber ,String userSecondNumber}){
     return showDialog(
       context: context,
       barrierDismissible: false,
@@ -605,7 +747,10 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                         child: new Text('Oui',style: TextStyle(color: Colors.grey),),
                         onPressed: (){
                           sendState.sink.add(true);
-                          return saveOrder(order: listGzChosen);
+                          return saveOrder(order: listGzChosen,
+                          userName: userName,
+                          userSecondNumber: userSecondNumber,
+                          userLocation: userLocation,userNumber: userNumber);
                         },
                       ),
                     ],
@@ -621,19 +766,21 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
   }
 
 
-  saveOrder({Map<String, List> order}){
+  saveOrder({Map<String, List> order, String userName, String userLocation,String userNumber ,String userSecondNumber}){
     FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
         .collection("reservation")
         .doc().set({
       "orderNum": "$hashCode",
-       'order': listGzChosen,
-      "totalPrice": totalPrice,
-      "userName" :"${widget.userName}" ,
-      "userCity" :"${widget.userCity}" ,
-      "userCommune" :"${widget.userCommune}" ,
-      "userQuarter" :"${widget.userQuarter}" ,
-      "phoneNumber" : "${widget.userFirstNumber}",
-      "secondNumber": "${widget.userSecondNumber}"
+      'order': listGzChosen,
+      "gzPlusDeliveryPrice": totalPrice,
+      'gzPrice': totalGzPrice,
+      "userName" :"$userName" ,
+      "userLocation" :"$userLocation" ,
+      "phoneNumber" : "$userNumber",
+      "secondNumber": "$userSecondNumber",
+      "reservationType": "$reservationTypeChosen",
+      "reservationDay": "$reservationDay",
+      "reservationHour": "$hourReservation"
     }).catchError((err) => print('error to set $err'));
     sendState.sink.add(false);
     Navigator.pop(context);
@@ -910,5 +1057,63 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
     price >= 1000000 && price < 1000000000  ?
     '$price Frcfa' : '$price Frcfa';
 
+  }
+
+
+  Future<TimeOfDay> giveYourReservationTime() async {
+    TimeOfDay time = await showTimePicker(
+        cancelText: "Annuler",
+        confirmText: 'Ok',
+        context: context,
+        initialTime: TimeOfDay.now());
+    if (time != null) {
+      setState(() {
+        hourReservationChoice = time;
+      });
+      if (time.hour == DateTime.now().hour) {
+        setState(() {
+          hourReservation = '${time.hour + 1}h:${time.minute}min';
+        });
+        Fluttertoast.showToast(
+            msg: "Livraison dans une heure ?",
+            backgroundColor: Colors.green,
+            textColor: Colors.white);
+      } else if (time.hour < DateTime.now().hour) {
+        Fluttertoast.showToast(
+            msg: "Votre heure est mal choisi.",
+            backgroundColor: Colors.blueGrey,
+            textColor: Colors.white);
+      } else {
+        setState(() {
+          hourReservation = '${time.hour}h:${time.minute}min';
+        });
+      }
+    }
+    return null;
+  }
+
+  Future<TimeOfDay> giveYourReservationDay() async {
+    DateTime date = await showDatePicker(
+        cancelText: "Annuler",
+        confirmText: 'Ok',
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime.now(),
+        lastDate: DateTime(2030, 12, 31));
+    if (date != null) {
+      if (date.day > DateTime.now().day + 3) {
+        Fluttertoast.showToast(
+            msg: "Le delai de livraison est trop long",
+            backgroundColor: Colors.blueGrey,
+            textColor: Colors.white);
+      } else {
+        setState(() {
+          reservationDayChoice = date;
+          reservationDay =
+          "${DateFormat.MMMMEEEEd('fr_FR').format(DateTime(date.year, date.month, date.day))}";
+        });
+      }
+    }
+    return null;
   }
 }
