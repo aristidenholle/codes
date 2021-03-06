@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:animate_do/animate_do.dart ' as fade;
+import 'package:animate_do/animate_do.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -33,6 +34,62 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
   int totalGzPrice = 0;
   int totalPrice = 0;
 
+  int citySelected;
+  String cityChosen;
+  List<String> ivoryCostCity = [
+    'Abidjan-Yopougon',
+    'Abidjan-Port-Bouë',
+    'Abidjan-Deux-Plateaux',
+    'Abidjan-Cocody',
+    'Abidjan-Abobo',
+    'Abidjan-Le Plateau',
+    'Abidjan-Treichville',
+    'Abidjan-Koumassi',
+    'Abidjan-Marcory',
+    'Abidjan-Anyama',
+    'Abidjan-Adjamé',
+    'Abidjan-Attécoubé',
+    'Agboville',
+    'Anyama',
+    'Abengourou',
+    'Akoupé',
+    'Adzopé',
+    'Agnibilékrou',
+    'Bouaké',
+    'Bingerville',
+    'Bouaflé',
+    'Boundiali',
+    'Bondoukou',
+    'Daloa',
+    'Daoukro',
+    'Divo',
+    'Dimbokro',
+    'Dabou',
+    'Danané',
+    'Duékoué',
+    'Ferkessedougou',
+    'Grand-Bassam',
+    'Gagnoa',
+    'Guiglo',
+    'Issia',
+    'Katiola',
+    'Korhogo',
+    'Lakota',
+    'Man',
+    'Odienné',
+    'Oumé',
+    'Séguéla',
+    'San-Pédro',
+    'Soubré',
+    'Sinfra',
+    'Tiassalé',
+    'Tingréla',
+    'Toumodi',
+    'Vavoua',
+    'Yamoussoukro',
+    'Zuénoula',
+    'Autre'
+  ];
 
   _ValidateOrderPageState({this.listGzChosen});
 
@@ -134,9 +191,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                             children: [
                               TextButton.icon(
                                   onPressed: (){
-                                    return editDialog(oldValue:
-                                    (user.data.data() != null && user.data.data()["userLocation"] != null ) ?
-                                    user.data.data()["userLocation"] : "", keyType: 'userLocation');
+                                    return listOfCityDialog();
 
                                   }, icon: Icon( (user.data.data() != null && user.data.data()["userLocation"] != null ) ?
                               Icons.home : Icons.edit),
@@ -559,14 +614,15 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
   }
 
   void edit({String value, String type}) {
-    FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid).update({
+    FirebaseFirestore.instance.collection('users')
+        .doc(FirebaseAuth.instance.currentUser.uid).set({
       '$type': (type  == "phoneNumber" || type  == "secondNumber") ? value : value.substring(0,1).toUpperCase() + value.substring(1).toLowerCase()
-    }).catchError((err) => print(''));
+    },SetOptions(merge: true)).catchError((err) => print('ERROR TO SAVE DATA $err'));
     Fluttertoast.showToast(
         msg: "Modification effectuée",
         textColor: Colors.white,
         backgroundColor: Colors.green,
-        gravity: ToastGravity.BOTTOM).catchError((er) => print('toast error'));
+        gravity: ToastGravity.BOTTOM);
     editController.clear();
 
   }
@@ -594,7 +650,8 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                     content: Center(child:  snapshot.data == true ?
                     Text("En cours d'envoie...", textAlign: TextAlign.center)
                         :Text(msg, textAlign: TextAlign.center)),
-                    actions: <Widget>[FlatButton(
+                    actions: <Widget>[
+                      FlatButton(
                       child:  Text('Non',style: TextStyle(color: Colors.grey[800])),
                       onPressed: () {
                         print('$listGzChosen');
@@ -657,5 +714,103 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
         backgroundColor: Colors.green,
         textColor: Colors.white);*/
 
+  }
+
+  Future<AlertDialog> listOfCityDialog({String clientLocation}) async{
+    return showDialog(
+      barrierDismissible: false,
+      context: context,
+      builder: (context) {
+        return Center(
+          child: SingleChildScrollView(
+            child: FadeInDown(
+              duration: Duration(milliseconds: 500),
+              child: AlertDialog(
+                title: Text('Villes'),
+                content: Container(
+                  height: 300,
+                  child: StatefulBuilder(
+                    builder: (context, StateSetter setState) {
+                      return Container(
+                        child: ListView.builder(
+                            itemCount: ivoryCostCity.length,
+                            itemBuilder: (context, i) {
+                              return RadioListTile(
+                                  title: Text('${ivoryCostCity[i]}'),
+                                  value: i,
+                                  groupValue: citySelected,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      citySelected = i;
+                                      cityChosen = ivoryCostCity[value];
+                                    });
+                                  });
+                            }),
+                      );
+                    },
+                  ),
+                ),
+                actions: [
+                  TextButton(onPressed: () {
+                    Navigator.pop(context);
+                    setState(() {
+                      citySelected = null;
+                      cityChosen = null;
+                    });
+                  }, child: Text('Annuler',style: TextStyle(color: Colors.grey))),
+
+                  TextButton(onPressed: () {
+                    if (cityChosen != null && cityChosen !='Autre') {
+                      if (clientLocation != null && clientLocation.toLowerCase()
+                          .length == cityChosen.toLowerCase().length) {
+                        //ALREADY SAVED
+                        setState(() {
+                          citySelected = null;
+                          cityChosen = null;
+                        });
+                        print('ALREADY SAVED');
+                        Navigator.pop(context);
+                      } else {
+                        FirebaseFirestore.instance.collection('users').doc(
+                            FirebaseAuth.instance.currentUser.uid).set({
+                          'userLocation': cityChosen
+                        },SetOptions(merge: true)).catchError((err) => print('Edited Error $err'));
+                        Fluttertoast.showToast(
+                            msg: "Succès",
+                            textColor: Colors.white,
+                            backgroundColor: Colors.green,
+                            gravity: ToastGravity.BOTTOM);
+                        Navigator.pop(context);
+                        setState(() {
+                          citySelected = null;
+                          cityChosen = null;
+                        });
+                      }
+                    }else if(cityChosen == 'Autre'){
+                      setState(() {
+                        editCityOrCommuneOrQuarter = true;
+                      });
+                      Navigator.pop(context);
+                    }
+                    else {
+                      return validate(errorMsg: 'Indiquez votre localité');
+                    }
+                  }, child: Text('Ok',style: TextStyle(color: Colors.blueGrey))),
+
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void validate({String errorMsg}) {
+    Fluttertoast.showToast(
+        msg: "$errorMsg",
+        textColor: Colors.white,
+        backgroundColor: Colors.red,
+        gravity: ToastGravity.BOTTOM);
   }
 }
