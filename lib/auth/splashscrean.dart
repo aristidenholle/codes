@@ -883,22 +883,22 @@ signUorLogin() async{
     });
   }
 
-void oneSignalConfig() async {
-    OneSignal.shared.init('2921221c-ad43-4310-a5c0-83db0ab952b3');
+
+
+  void oneSignalConfig() async {
+    OneSignal.shared.init('a0fb69a4-4f28-4eee-ad25-30bf5707bcd4');
     OneSignal.shared.setInFocusDisplayType(OSNotificationDisplayType.notification);
-    OSPermissionSubscriptionState state =
-    await OneSignal.shared.getPermissionSubscriptionState();
+    OSPermissionSubscriptionState state = await OneSignal.shared.getPermissionSubscriptionState();
     OneSignal.shared.getPermissionSubscriptionState().then((value){
       print('SPLASH P ${value.subscriptionStatus.userId}');
     }).catchError((er) => print('$er'));
-    print('SPLASH PAGE ${state.subscriptionStatus.userId}');
-    setState(() {
-      pId = state.subscriptionStatus.userId;
-    });
+    print('SPLASH P ${state.subscriptionStatus.userId}');
     OneSignal.shared.setNotificationReceivedHandler((notification) {
       return notification.jsonRepresentation().replaceAll("\\n", "\n");
     });
   }
+
+
 
   String codeValidator(String code) {
     String pattern = r'(^[0-9]*$)';

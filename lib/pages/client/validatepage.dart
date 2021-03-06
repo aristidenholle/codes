@@ -9,14 +9,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:phone_number/phone_number.dart';
 import 'package:intl/date_symbol_data_local.dart';
 
 class ValidateOrderPage extends StatefulWidget {
-  final userName, userCommune, userQuarter, userFirstNumber, userSecondNumber, userCity;
+  final userName, userCommune, userQuarter, userFirstNumber, userSecondNumber, userCity, userPlayerId;
   final Map<String, List> gzsChosen;
 
-  const ValidateOrderPage({Key key, this.userName, this.userCommune, this.userQuarter, this.userFirstNumber, this.userSecondNumber, this.gzsChosen, this.userCity}) : super(key: key);
+  const ValidateOrderPage({Key key, this.userName, this.userCommune, this.userQuarter, this.userFirstNumber, this.userSecondNumber, this.gzsChosen, this.userCity, this.userPlayerId}) : super(key: key);
 
   @override
   _ValidateOrderPageState createState() => _ValidateOrderPageState(listGzChosen: gzsChosen);
@@ -770,6 +771,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
     FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
         .collection("reservation")
         .doc().set({
+      "playerId":widget.userPlayerId,
       "orderNum": "$hashCode",
       'order': listGzChosen,
       "gzPlusDeliveryPrice": totalPrice,
@@ -1115,5 +1117,18 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
       }
     }
     return null;
+  }
+
+
+  void sendNotification({String nom, String msg, String playerId}) async {
+    var notification = OSCreateNotification(
+        playerIds: [playerId],
+        content: "$nom $msg",
+        heading: "Service Gz",
+        bigPicture: 'images/gzylindersimg.png',
+        buttons: [
+          OSActionButton(text: "voir", id: "id1"),
+        ]);
+    await OneSignal.shared.postNotification(notification);
   }
 }

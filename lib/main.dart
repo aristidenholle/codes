@@ -18,8 +18,8 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   runApp(MyApp());
-/*  try {
-    OneSignal.shared.init('');
+ try {
+    OneSignal.shared.init('a0fb69a4-4f28-4eee-ad25-30bf5707bcd4');
     OneSignal.shared
         .setInFocusDisplayType(OSNotificationDisplayType.notification);
     OSPermissionSubscriptionState state =
@@ -30,7 +30,7 @@ void main() async {
     });
   } catch (e) {
     print('ONE SIGNAL ERROR IN MAIN $e');
-  }*/
+  }
 
   //var initializationSettingsAndroid = AndroidInitializationSettings('taxsecurelogosc');
   // Note: permissions aren't requested here just to demonstrate that can be done later using the `requestPermissions()` method
@@ -121,6 +121,11 @@ class AppCycleLife extends StatefulWidget {
 class AppCycleLifeManagement extends State<AppCycleLife>
     with WidgetsBindingObserver {
   @override
+  void initState() {
+    oneSignalConfig();
+    super.initState();
+  }
+  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     switch (state) {
@@ -158,7 +163,7 @@ class AppCycleLifeManagement extends State<AppCycleLife>
 
 
   void oneSignalConfig() async {
-/*    OneSignal.shared.init('');
+ OneSignal.shared.init('a0fb69a4-4f28-4eee-ad25-30bf5707bcd4');
     OneSignal.shared.setInFocusDisplayType(OSNotificationDisplayType.notification);
     OSPermissionSubscriptionState state =
     await OneSignal.shared.getPermissionSubscriptionState();
@@ -168,6 +173,6 @@ class AppCycleLifeManagement extends State<AppCycleLife>
     print('MAIN P ${state.subscriptionStatus.userId}');
     OneSignal.shared.setNotificationReceivedHandler((notification) {
       return notification.jsonRepresentation().replaceAll("\\n", "\n");
-    });*/
+    });
   }
 }

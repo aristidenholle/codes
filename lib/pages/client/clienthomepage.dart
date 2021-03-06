@@ -7,8 +7,8 @@ import 'package:flutter_page_transition/flutter_page_transition.dart';
 import 'package:gzapp/pages/client/notificationpage.dart';
 import 'package:marquee/marquee.dart';
 import 'package:gzapp/pages/client/validatepage.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'ordertrack.dart';
 
 
@@ -34,9 +34,12 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
 
   List carousel = ["images/imageone.jpg" , "images/imagetwo.png"];
 
+  String playerId;
+
   @override
   void initState() {
     checkIfFirstGzNameSaved();
+    oneSignalConfig();
     super.initState();
   }
 
@@ -188,6 +191,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                 print('$gzChosen $gzsList, $gzsChosen');
                 Navigator.push(context, PageTransition(
                     child: ValidateOrderPage(
+                      userPlayerId: playerId,
                       userName: widget.userName,
                       userCommune: widget.commune,
                       userCity: widget.city,
@@ -502,5 +506,21 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
         ),
       ],
     );
+  }
+
+  void oneSignalConfig() async {
+    OneSignal.shared.init('a0fb69a4-4f28-4eee-ad25-30bf5707bcd4');
+    OneSignal.shared.setInFocusDisplayType(OSNotificationDisplayType.notification);
+    OSPermissionSubscriptionState state = await OneSignal.shared.getPermissionSubscriptionState();
+    OneSignal.shared.getPermissionSubscriptionState().then((value){
+      print('HOME P ${value.subscriptionStatus.userId}');
+    }).catchError((er) => print('$er'));
+    print('HOME P ${state.subscriptionStatus.userId}');
+    setState(() {
+      playerId = state.subscriptionStatus.userId;
+    });
+    OneSignal.shared.setNotificationReceivedHandler((notification) {
+      return notification.jsonRepresentation().replaceAll("\\n", "\n");
+    });
   }
 }
