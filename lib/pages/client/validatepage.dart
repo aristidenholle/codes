@@ -46,218 +46,247 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.teal,
-        elevation: 0.0,
-        centerTitle: true,
-        title: Text('Validation'),
-        leading: IconButton(icon: Icon(Icons.arrow_back),
-            onPressed: (){
-              Navigator.pop(context);
-              setState(() {
-                listGzChosen.clear();
-              });
-            }),
-      ),
-      body: Container(
-        child: Column(
-          children: [
-            Container(
-              height: editCityOrCommuneOrQuarter == false ? 150 : 250,
-              child: StreamBuilder(
-                stream: FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser.uid).snapshots(),
-                builder: (context, AsyncSnapshot<DocumentSnapshot> user) {
-                  if (user.hasError) {
-                    return Center(
-                      child: Text(""),
-                    );
-                  } else if (!user.hasData) {
-                    return Center(
-                      child: SpinKitPulse(
-                        color: Colors.green,
-                        controller: AnimationController(vsync:
-                        this, duration: Duration(milliseconds: 2000)),
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        appBar: AppBar(
+          backgroundColor: Colors.teal,
+          elevation: 0.0,
+          centerTitle: true,
+          title: Text('LIVRAISON'),
+          leading: IconButton(icon: Icon(Icons.arrow_back),
+              onPressed: (){
+                Navigator.pop(context);
+                setState(() {
+                  listGzChosen.clear();
+                });
+              }),
+        ),
+        body: Container(
+          child: Column(
+            children: [
+              Container(
+                height:  editCityOrCommuneOrQuarter == false ?  200 :  280,
+                child: StreamBuilder(
+                  stream: FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser.uid).snapshots(),
+                  builder: (context, AsyncSnapshot<DocumentSnapshot> user) {
+                    if (user.hasError) {
+                      return Center(
+                        child: Text(""),
+                      );
+                    } else if (!user.hasData) {
+                      return Center(
+                        child: SpinKitPulse(
+                          color: Colors.green,
+                          controller: AnimationController(vsync:
+                          this, duration: Duration(milliseconds: 2000)),
+                        ),
+                      );
+                    }
+                    return Card(
+                      child: Column(
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.only(left: 10, top: 15),
+                            child: (user.data.data() != null || user.data.data()["userName"] != null) ? Row(
+                              children: [
+                                Text("${user.data.data()["userName"]}",style: TextStyle(fontWeight: FontWeight.bold))
+                              ],
+                            ) : Text('Nom et Prénom'),
+                          ),
+
+                          Row(
+                            children: [
+                              TextButton.icon(
+                                  onPressed: (){
+
+                                    return editDialog(oldValue:
+                                    (user.data.data() != null && user.data.data()["phoneNumber"] != null ) ?
+                                    user.data.data()["phoneNumber"] : "0000", keyType: 'phoneNumber');
+
+                                  }, icon: Icon( (user.data.data() != null && user.data.data()["phoneNumber"] != null ) ?
+                              Icons.call : Icons.edit),
+
+                                  label: Text((user.data.data() != null && user.data.data()["phoneNumber"] != null)  ?
+                                  " ${user.data.data()["phoneNumber"]}" :  'Numéro de téléphone')),
+                            ],
+                          ),
+
+                          Row(
+                            children: [
+                              TextButton.icon(
+                                  onPressed: (){
+
+                                    return editDialog(oldValue:
+                                    (user.data.data() != null && user.data.data()["secondNumber"] != null ) ?
+                                    user.data.data()["secondNumber"] : "0000", keyType: 'secondNumber');
+
+                                  }, icon: Icon( (user.data.data() != null && user.data.data()["secondNumber"] != null ) ?
+                              Icons.call : Icons.edit),
+
+                                  label: Text((user.data.data() != null && user.data.data()["secondNumber"] != null)  ?
+                                  " ${user.data.data()["secondNumber"]}" :  'Autre numéro de téléphone')),
+                            ],
+                          ),
+
+                          editCityOrCommuneOrQuarter == false ?
+                          Row(
+                            children: [
+                              TextButton.icon(
+                                  onPressed: (){
+                                    return editDialog(oldValue:
+                                    (user.data.data() != null && user.data.data()["userLocation"] != null ) ?
+                                    user.data.data()["userLocation"] : "", keyType: 'userLocation');
+
+                                  }, icon: Icon( (user.data.data() != null && user.data.data()["userLocation"] != null ) ?
+                              Icons.home : Icons.edit),
+
+                                  label: Text((user.data.data() != null && user.data.data()["userLocation"] != null)  ?
+                                  " ${user.data.data()["userLocation"]}" :  'Lieu de résidence')),
+                            ],
+                          )
+
+                          /*Row(
+                            children: [
+                              Container(
+                                margin: const EdgeInsets.only(left: 15),
+                                child: Text("${user.data.data()["city"]} ${user.data.data()["commune"]} ${user.data.data()["quarter"]}"),
+                              ),
+                              IconButton(
+                                  onPressed: (){
+                                    setState(() {
+                                      editCityOrCommuneOrQuarter = true;
+                                    });
+                                  },
+                                  icon: Icon(Icons.edit, color: Colors.grey))
+                            ],
+                          )*/ : fade.FadeIn(
+                            duration: Duration(milliseconds: 600),
+                            child: Column(
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.only(left: 15),
+                                          child: Text("${(user.data.data() != null && user.data.data()["city"] != null ) ?
+                                          user.data.data()["city"]: "Ville"} "),
+                                        ),
+                                        IconButton(
+                                            onPressed: (){
+                                              return editDialog(oldValue: (user.data.data() != null && user.data.data()["city"] != null ) ?
+                                              user.data.data()["city"] : '', keyType: 'city');
+                                            },
+                                            icon: Icon(
+                                                Icons.edit,color: Colors.grey))
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        Container(
+                                          margin: const EdgeInsets.only(left: 15),
+                                          child: Text("${(user.data.data() != null && user.data.data()["commune"] != null ) ?
+                                              user.data.data()["commune"] : "Commune"}"),
+                                        ),
+                                        IconButton(
+                                            onPressed: (){
+                                              return editDialog(oldValue: (user.data.data() != null && user.data.data()["commune"] != null ) ?
+                                              user.data.data()["commune"] : '', keyType: 'commune');
+                                            },
+                                            icon: Icon(Icons.edit,color: Colors.grey))
+                                      ],
+                                    ),
+                                  ],
+                                ),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      margin: const EdgeInsets.only(left: 15),
+                                      child: Text("${(user.data.data() != null && user.data.data()["quarter"] != null ) ?
+                                          user.data.data()["quarter"]: "Quartier"}"),
+                                    ),
+                                    IconButton(
+                                        onPressed: (){
+                                          return editDialog(oldValue:
+                                          (user.data.data() != null && user.data.data()["quarter"] != null ) ?
+                                          user.data.data()["quarter"] : '', keyType: 'quarter');
+                                        },
+                                        icon: Icon(Icons.edit,color: Colors.grey))
+                                  ],
+                                ),
+
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    FlatButton(onPressed: (){
+                                      setState(() {
+                                        editCityOrCommuneOrQuarter = false;
+                                      });
+                                    }, child: Text('Fermer'))
+                                  ],
+                                )
+                              ],
+                            ),
+                          ) ,
+
+
+                        ],
                       ),
                     );
                   }
-                  return Card(
-                    child: Column(
-                      children: [
-                        Container(
-                          margin: const EdgeInsets.only(left: 10, top: 15),
-                          child: Row(
-                            children: [
-                              Text("${user.data.data()["userName"]}",style: TextStyle(fontWeight: FontWeight.bold))
-                            ],
-                          ),
-                        ),
-                        editCityOrCommuneOrQuarter == false ? Row(
-                          children: [
-                            Container(
-                              margin: const EdgeInsets.only(left: 15),
-                              child: Text("${user.data.data()["city"]} ${user.data.data()["commune"]} ${user.data.data()["quarter"]}"),
-                            ),
-                            IconButton(
-                                onPressed: (){
-                                  setState(() {
-                                    editCityOrCommuneOrQuarter = true;
-                                  });
-                                },
-                                icon: Icon(Icons.edit, color: Colors.grey))
-                          ],
-                        ) : fade.FadeIn(
-                          duration: Duration(milliseconds: 600),
-                          child: Column(
-                            children: [
-                              Row(
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        margin: const EdgeInsets.only(left: 15),
-                                        child: Text("${user.data.data()["city"]}"),
-                                      ),
-                                      IconButton(
-                                          onPressed: (){
-                                            return editDialog(oldValue: user.data.data()["city"], keyType: 'city');
-                                          },
-                                          icon: Icon(Icons.edit,color: Colors.grey))
-                                    ],
-                                  ),
-                                  Row(
-                                    children: [
-                                      Container(
-                                        margin: const EdgeInsets.only(left: 15),
-                                        child: Text("${user.data.data()["commune"]}"),
-                                      ),
-                                      IconButton(
-                                          onPressed: (){
-                                            return editDialog(oldValue: user.data.data()["commune"], keyType: 'commune');
-                                          },
-                                          icon: Icon(Icons.edit,color: Colors.grey))
-                                    ],
-                                  ),
-                                ],
-                              ),
-
-                              Row(
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 15),
-                                    child: Text("${user.data.data()["quarter"]}"),
-                                  ),
-                                  IconButton(
-                                      onPressed: (){
-                                        return editDialog(oldValue: user.data.data()["quarter"], keyType: 'quarter');
-                                      },
-                                      icon: Icon(Icons.edit,color: Colors.grey))
-                                ],
-                              ),
-
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  FlatButton(onPressed: (){
-                                    setState(() {
-                                      editCityOrCommuneOrQuarter = false;
-                                    });
-                                  }, child: Text('Fermer'))
-                                ],
-                              )
-                            ],
-                          ),
-                        ) ,
-
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.only(left: 15),
-                                  child: Text("${user.data.data()["phoneNumber"]}"),
-                                ),
-                                IconButton(
-                                    onPressed: (){
-                                      return editDialog(oldValue: user.data.data()["phoneNumber"], keyType: 'phoneNumber');
-                                    },
-                                    icon: Icon(Icons.edit,color: Colors.grey))
-                              ],
-                            ),
-
-                            ( user.data.data()["secondNumber"] != null &&
-                                user.data.data()["secondNumber"].toString().isNotEmpty) ?
-                            Row(
-                              children: [
-                                Container(
-                                  child: Text("${user.data.data()["secondNumber"]}"),
-                                ),
-                                IconButton(
-                                    onPressed: (){
-                                      return editDialog(oldValue: user.data.data()["secondNumber"], keyType: 'secondNumber');
-                                    },
-                                    icon: Icon(Icons.edit,color: Colors.grey))
-                              ],
-                            )
-                                : Container(
-                                height: 1,
-                                child: Text(''))
-                          ],
-                        )
-
-                      ],
-                    ),
-                  );
-                }
-              ),
-            ),
-
-            Padding(
-              padding: const EdgeInsets.only(top: 25),
-              child: SingleChildScrollView(
-                child: Column(
-                  children: buildGzChoice(),
                 ),
               ),
-            ),
 
-            Padding(
-              padding: const EdgeInsets.only(top: 40),
-              child: Container(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    Text('PRIX: ${getAllGzPrice()}frcfa'),
-                    Text('Frais de livraison: 500 frcfa'),
-                  ],
+              Padding(
+                padding: const EdgeInsets.only(top: 25),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: buildGzChoice(),
+                  ),
                 ),
               ),
-            ),
 
-            Padding(
-              padding: const EdgeInsets.only(top: 35),
-              child: Container(
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text('PRIX TOTAL: ${getAllPrice()}'),
-                  ],
+              Padding(
+                padding: const EdgeInsets.only(top: 40),
+                child: Container(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      Text('PRIX: ${getAllGzPrice()}frcfa'),
+                      Text('Frais de livraison: 500 frcfa'),
+                    ],
+                  ),
                 ),
               ),
-            )
-          ],
+
+              Padding(
+                padding: const EdgeInsets.only(top: 35),
+                child: Container(
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('PRIX TOTAL: ${getAllPrice()}'),
+                    ],
+                  ),
+                ),
+              )
+            ],
+          ),
         ),
-      ),
-      bottomNavigationBar: Container(
-        width: MediaQuery.of(context).size.width,
-        color: Colors.teal,
-        height: 45,
-        child: FlatButton(
-            onPressed: () {
-              return alertToShow(msg: "Vous confirmez votre achat?");
-            },
-            child: Text('Valider',style: TextStyle(color: Colors.white))),
+        bottomNavigationBar: Container(
+          width: MediaQuery.of(context).size.width,
+          color: Colors.teal,
+          height: 45,
+          child: FlatButton(
+              onPressed: () {
+                return alertToShow(msg: "Vous confirmez votre achat?");
+              },
+              child: Text('Valider',style: TextStyle(color: Colors.white))),
+        ),
       ),
     );
   }
@@ -466,7 +495,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                             }
                             : (value) {
                               if (value.isEmpty) {
-                                return 'Entrez votre ${keyType == 'city' ? "ville" : keyType == 'commune' ? "commune" :
+                                return 'Entrez votre ${keyType == 'userLocation' ? "Localité" : keyType == 'commune' ? "commune" :
                                 keyType == 'quarter' ? "quarter" : (keyType == 'phoneNumber' || keyType == 'secondNumber' ) ? "numéro" : ''}';
                               } else if (!regExp.hasMatch(value)) {
                                 return "Votre saisie est invalide";
@@ -493,21 +522,21 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                           onPressed: () {
                             if (formKey.currentState.validate() &&
                                 editController.text != null) {
-                              print("${editController.text}, ${oldValue}");
+                              print("${editController.text}, $oldValue");
                               if((keyType  == "phoneNumber" || keyType  == "secondNumber") && editController.text == oldValue.substring(4)){
                                 Navigator.pop(context);
                                 Fluttertoast.showToast(
                                     msg: "Aucune modification détectée.",
                                     textColor: Colors.white,
                                     backgroundColor: Colors.teal,
-                                    gravity: ToastGravity.BOTTOM).catchError((er) => print('toast error'));
+                                    gravity: ToastGravity.BOTTOM);
                                 editController.clear();
                               } else if(editController.text == oldValue){
                                 Fluttertoast.showToast(
                                     msg: "Aucune modification détectée.",
                                     textColor: Colors.white,
                                     backgroundColor: Colors.teal,
-                                    gravity: ToastGravity.BOTTOM).catchError((er) => print('toast error'));
+                                    gravity: ToastGravity.BOTTOM);
                                 editController.clear();
                                 Navigator.pop(context);
                               }else{

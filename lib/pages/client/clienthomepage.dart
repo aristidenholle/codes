@@ -127,18 +127,22 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
 
         //AVEC LA CASE A COCHER buildGzChoice FAIT DE CETTE MANIERE LA MISE A JOUR
         //EST FAITE POUR LA CONDITION QUE JE FAIS POUR AFFICHER OU PAS LE bottomNavigationBar
-        bottomNavigationBar:gzChosen.keys.isEmpty ?
+        bottomNavigationBar: gzChosen.keys.isEmpty  ?
+        /*&&
+            //TO BE SURE USER HAVE AT LEAST GZ CHECKED
+            ((persistentStore.keys.length >=1 && persistentStore[persistentStore.keys.toList().first][0] == true) ||
+           ( gzsList.keys.length >=1 && gzsList[gzsList.keys.toList().first][0] == true ))?*/
         Container(
           height: 45,
           child: Text(''),
         )
             : Container(
           width: MediaQuery.of(context).size.width,
-          color: Colors.teal,
+          color: Colors.redAccent,
           height: 45,
-          child: FlatButton(
+          child: TextButton(
               onPressed: () {
-                print('$gzChosen $gzsList');
+                print('$gzChosen $gzsList, $gzsChosen');
                 Navigator.push(context, PageTransition(
                     child: ValidateOrderPage(
                       userName: widget.userName,
@@ -149,20 +153,32 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                       userSecondNumber: widget.secondNumber,
                       gzsChosen: gzsChosen,
                     ),
-                    type: PageTransitionType.slideInLeft,
+                    type: PageTransitionType.fadeIn,
                     duration: Duration(milliseconds: 500)));
 
 
-                for(int i = 0; i < gzsList.keys.length; i++){
-                  if(gzsList[gzsList.keys.toList()[i]][0] == true){
-                    setState(() {
-                      gzsList[gzsList.keys.toList()[i]][0] = false;
-                      gzChosen.clear();
-                    });
+                if(gzsList.keys.length >= 1){
+                  for(int i = 0; i < gzsList.keys.length; i++){
+                    if(gzsList[gzsList.keys.toList()[i]][0] == true){
+                      setState(() {
+                        gzsList[gzsList.keys.toList()[i]][0] = false;
+                        gzChosen.clear();
+                      });
+                    }
+                  }
+                }else{
+                  for(int i = 0; i < persistentStore.keys.length; i++){
+                    if(persistentStore[persistentStore.keys.toList()[i]][0] == true){
+                      setState(() {
+                        persistentStore[persistentStore.keys.toList()[i]][0] = false;
+                        gzChosen.clear();
+                      });
+                    }
                   }
                 }
+
               },
-              child: Text('Suivant')),
+              child: Text('SUIVANT',style: TextStyle(color: Colors.white),)),
         ),
       )
     );
@@ -394,7 +410,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                 int newPrice = persistentStore[key][1] - oldPrices;
                 countPrice--;
                 persistentStore.addAll({"$key" : [checked,newPrice, gzs[2],countPrice, oldPrice]});
-                if(gzsChosen.isNotEmpty){
+                if(gzsChosen.keys.length >= 1 && gzsChosen["$key"] != null){
                   gzsChosen["$key"][0] = newPrice;
                   gzsChosen["$key"][2] = countPrice;
                 }
@@ -432,7 +448,8 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
               countPrice++;
               int newPrice  = oldPrices * countPrice;
               persistentStore.addAll({"$key" : [checked, newPrice, gzs[2],countPrice, oldPrice]});
-              if(gzsChosen.isNotEmpty){
+              print("$persistentStore  $gzsChosen");
+              if(gzsChosen.keys.length >= 1 && gzsChosen["$key"] != null){
                 gzsChosen["$key"][0] = newPrice;
                 gzsChosen["$key"][2] = countPrice;
               }
