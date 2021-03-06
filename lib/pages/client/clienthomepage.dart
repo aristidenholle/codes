@@ -2,7 +2,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_page_transition/flutter_page_transition.dart';
+import 'package:gzapp/pages/client/notificationpage.dart';
 import 'package:marquee/marquee.dart';
 import 'package:gzapp/pages/client/validatepage.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -46,8 +48,49 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
         appBar: AppBar(
           elevation: 0.0,
           title: Text('Recharge ton gaz'),
-          centerTitle: true,
           actions: [
+            StreamBuilder(
+                stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
+                    .collection("notification")
+                    .snapshots(),
+                builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+                  if (snapshot.hasError) {
+                    return Text('');
+                  } else if (!snapshot.hasData) {
+                    return Text('');
+                  }
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 10),
+                    child: IconButton(
+                      onPressed: (){
+                        Navigator.push(
+                            context, PageTransition(
+                            child: NotificationPage(),
+                            type: PageTransitionType.fadeIn,
+                            duration: Duration(milliseconds: 500)
+                        ));
+                      },
+                      tooltip: 'notification',
+                      icon: Stack(
+                        alignment:Alignment.topRight,
+                        children: [
+                          Icon(Icons.notifications,size: 37,color: Colors.white),
+                          Container(
+                            height: 25.0,
+                            width: 20.0,
+                            decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16.0)
+                            ),
+                            child: Center(
+                                child: Text('${snapshot?.data?.docs?.length}',style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold,fontSize: 17))),
+                          )
+                        ],
+                      ),
+                    ),
+                  );
+                }
+            ),
             StreamBuilder(
                 stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
                     .collection("reservation")
@@ -73,15 +116,15 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                       },
                       tooltip: 'notification',
                       icon: Stack(
-                        alignment:Alignment.topRight,
+                        alignment:Alignment.bottomRight,
                         children: [
-                          Icon(Icons.notifications,size: 37,color: Colors.white),
+                          Icon(FlutterIcons.gas_cylinder_mco,size: 40,color: Colors.white),
                           Container(
-                            height: 25.0,
+                            height: 20.0,
                             width: 20.0,
                             decoration: BoxDecoration(
                                 color: Colors.white,
-                                borderRadius: BorderRadius.circular(16.0)
+                                borderRadius: BorderRadius.circular(5.0)
                             ),
                             child: Center(
                                 child: Text('${snapshot?.data?.docs?.length}',style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold,fontSize: 17))),
