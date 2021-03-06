@@ -9,6 +9,8 @@ class SellerPage extends StatefulWidget {
 class _SellerPageState extends State<SellerPage> {
   @override
   Widget build(BuildContext context) {
-    return Container();
+    return Container(
+      child: Text(''),
+    );
   }
 }

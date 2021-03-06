@@ -45,7 +45,8 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       child:Scaffold(
         appBar: AppBar(
           elevation: 0.0,
-          title: Text('Service Gz'),
+          title: Text('Recharge ton gaz'),
+          centerTitle: true,
           actions: [
             StreamBuilder(
                 stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
@@ -93,7 +94,6 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
             )
           ],
         ),
-        drawer: Drawer(),
         body:  Container(
           height: MediaQuery.of(context).size.height,
           child: Column(
@@ -119,16 +119,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
               ),
 
               Expanded(
-                child: gzsList.isEmpty ?
-                Center(
-                  child: Text('Chargement en cours...'),
-                )
-                    :
-                SingleChildScrollView(
-                  child: Column(
-                    children:  buildGzChoice(),
-                  ),
-                ),
+                child: buildGzChoice(),
               ),
             ],
           ),
@@ -176,53 +167,108 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       )
     );
   }
+   Widget buildGzChoice(){
+    if(gzsList.isNotEmpty){
+      List<Widget> lgz = [];
+      for(var i = 0; i < gzsList.keys.length;  i++){
+        Widget g = Card(
+          child: Container(
+            margin: const EdgeInsets.only(top: 25),
+            width: MediaQuery.of(context).size.width,
+            child: Row(
+              children: [
+                Container(
+                  child: Text('${gzsList[gzsList.keys.toList()[i]][2]}'),
+                ),
+                Expanded(
+                  child: CheckboxListTile(
+                    title: Text('${gzsList.keys.toList()[i]}'),
+                    onChanged: (bool value) async{
+                      setState((){
+                        gzsList[gzsList.keys.toList()[i]][0] = value;
+                      });
+                      if(gzsList[gzsList.keys.toList()[i]][0] == true) {
+                        setState((){
+                          gzsChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], 1, gzsList[gzsList.keys.toList()[i]][1]]});
+                          gzChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], 1, gzsList[gzsList.keys.toList()[i]][1]]});
+                        });
+                      }
+                      else if(gzsList[gzsList.keys.toList()[i]][0] == false){
+                        setState(() {
+                          gzsChosen.remove(gzsList.keys.toList()[i]);
+                          gzChosen.remove(gzsList.keys.toList()[i]);
+                        });
+                      }
 
-  List<Widget> buildGzChoice(){
-    List<Widget> lgz = [];
-  for(var i = 0; i < gzsList.keys.length;  i++){
-    Widget g = Card(
-      child: Container(
-        margin: const EdgeInsets.only(top: 25),
-        width: MediaQuery.of(context).size.width,
-        child: Row(
-          children: [
-            Container(
-              child: Text('${gzsList[gzsList.keys.toList()[i]][2]}'),
+                      print('$gzChosen');
+                    }, value: gzsList[gzsList.keys.toList()[i]][0],
+
+                  ),
+                )
+              ],
             ),
-            Expanded(
-              child: CheckboxListTile(
-                title: Text('${gzsList.keys.toList()[i]}'),
-                onChanged: (bool value) async{
-                  setState((){
-                    gzsList[gzsList.keys.toList()[i]][0] = value;
-                  });
-                  if(gzsList[gzsList.keys.toList()[i]][0] == true) {
-                    setState((){
-                      gzsChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], 1, gzsList[gzsList.keys.toList()[i]][1]]});
-                      gzChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], 1, gzsList[gzsList.keys.toList()[i]][1]]});
-                    });
-                  }
-                  else if(gzsList[gzsList.keys.toList()[i]][0] == false){
-                    setState(() {
-                      gzsChosen.remove(gzsList.keys.toList()[i]);
-                      gzChosen.remove(gzsList.keys.toList()[i]);
-                    });
-                  }
+          ),
+        );
 
-                  print('$gzChosen');
-                }, value: gzsList[gzsList.keys.toList()[i]][0],
+        lgz.add(g);
+      }
 
+      return Text('');
+    }else{
+      return GridView.builder(
+        shrinkWrap: true,
+          itemCount: persistentStore.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2,childAspectRatio: 0.6),
+          itemBuilder: (context, i){
+          //WHEN YOU PUT i after context param IT DO AN INFITE LIST
+            return Card(
+              shape: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(width: 2,color: Colors.blueGrey)
               ),
-            )
-          ],
-        ),
-      ),
-    );
+              child: Container(
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 5),
+                      color: Colors.grey,
+                      height: 150,
+                      child: Text('${persistentStore[persistentStore.keys.toList()[i]][2]}'),
+                    ),
 
-    lgz.add(g);
-  }
+                    Text('${persistentStore.keys.toList()[i]}'),
 
-  return lgz;
+                    Text('${persistentStore[persistentStore.keys.toList()[i]][1]}'),
+                    CheckboxListTile(
+                     // title: Text('${persistentStore.keys.toList()[i]}'),
+                      onChanged: (bool value) async{
+                        setState((){
+                          persistentStore[persistentStore.keys.toList()[i]][0] = value;
+                        });
+                        if(persistentStore[persistentStore.keys.toList()[i]][0] == true) {
+                          setState((){
+                            gzsChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], 1, persistentStore[persistentStore.keys.toList()[i]][1]]});
+                            gzChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], 1, persistentStore[persistentStore.keys.toList()[i]][1]]});
+                          });
+                        }
+                        else if(persistentStore[persistentStore.keys.toList()[i]][0] == false){
+                          setState(() {
+                            gzsChosen.remove(persistentStore.keys.toList()[i]);
+                            gzChosen.remove(persistentStore.keys.toList()[i]);
+                          });
+                        }
+
+                        print('$gzChosen');
+                      }, value: persistentStore[persistentStore.keys.toList()[i]][0],
+
+                    )
+                  ],
+                ),
+              ),
+            );
+          });
+    }
+
 }
 
 //TO AVOID MANY READ IN FIREBASE
@@ -257,16 +303,16 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
     SharedPreferences get = await SharedPreferences.getInstance();
     var getFirstKeyName = get.getString(keyToCheckIFValueItSaved);
     var getGzNumber = get.getInt(gzNumber);
-    print('DATA $getFirstKeyName, $getGzNumber');
 
     //({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage']]});
-    for(var i = 0; i < gzsList.keys.length; i++){
-      var getGzName = get.getString("keyName$i");
-      if(getGzName != null){
-        print('DATA :$getGzName');
-        persistentStore.addAll({});
-      }
+    for(var i = 0; i < getGzNumber; i++){
+      setState(() {
+        persistentStore.addAll(
+            {"${get.getString("keyName$i")}" : [get.getBool("keyBool$i"), get.getInt("keyPrice$i"),get.getString("keyImg$i"),1,get.getInt("keyPrice$i")]});
+      });
     }
+
+    print('GZ LIST $persistentStore');
 /*    for(var i = 0; i < gzsList.keys.length; i++){
       var getGzBool = get.getString("keyBool$i");
       if(getGzBool != null){
@@ -302,14 +348,14 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
           .get().then((value){
         for(QueryDocumentSnapshot gz in value.docs){
           setState(() {
-            gzsList.addAll({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage'], 1]});
+            gzsList.addAll({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage'], 1, gz.data()['gzprice']]});
           });
         }
 
         setData(gzList: gzsList);
-        getData();
       }).catchError((er) => print('UNABLE TO GET GZ LIST $er'));
     }
+    getData();
   }
 
 }
