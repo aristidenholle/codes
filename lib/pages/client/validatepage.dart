@@ -34,6 +34,10 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
   int totalGzPrice = 0;
   int totalPrice = 0;
 
+  //CUSTOM USER LOCATION
+  bool editCity = false;
+  bool editCommuneQuarter = false;
+
   int citySelected;
   String cityChosen;
   List<String> ivoryCostCity = [
@@ -120,7 +124,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
               }),
         ),
         body: Container(
-          child: Column(
+          child: ListView(
             children: [
               Container(
                 height:  editCityOrCommuneOrQuarter == false ?  200 :  280,
@@ -220,64 +224,24 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                             child: Column(
                               children: [
                                 Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                                  children: [
-                                    Row(
-                                      children: [
-                                        Container(
-                                          margin: const EdgeInsets.only(left: 15),
-                                          child: Text("${(user.data.data() != null && user.data.data()["city"] != null ) ?
-                                          user.data.data()["city"]: "Ville"} "),
-                                        ),
-                                        IconButton(
-                                            onPressed: (){
-                                              return editDialog(oldValue: (user.data.data() != null && user.data.data()["city"] != null ) ?
-                                              user.data.data()["city"] : '', keyType: 'city');
-                                            },
-                                            icon: Icon(
-                                                Icons.edit,color: Colors.grey))
-                                      ],
-                                    ),
-                                    Row(
-                                      children: [
-                                        Container(
-                                          margin: const EdgeInsets.only(left: 15),
-                                          child: Text("${(user.data.data() != null && user.data.data()["commune"] != null ) ?
-                                              user.data.data()["commune"] : "Commune"}"),
-                                        ),
-                                        IconButton(
-                                            onPressed: (){
-                                              return editDialog(oldValue: (user.data.data() != null && user.data.data()["commune"] != null ) ?
-                                              user.data.data()["commune"] : '', keyType: 'commune');
-                                            },
-                                            icon: Icon(Icons.edit,color: Colors.grey))
-                                      ],
-                                    ),
-                                  ],
-                                ),
-
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     Container(
                                       margin: const EdgeInsets.only(left: 15),
-                                      child: Text("${(user.data.data() != null && user.data.data()["quarter"] != null ) ?
-                                          user.data.data()["quarter"]: "Quartier"}"),
+                                      child: Text("Indiquez votre localité"),
                                     ),
                                     IconButton(
                                         onPressed: (){
-                                          return editDialog(oldValue:
-                                          (user.data.data() != null && user.data.data()["quarter"] != null ) ?
-                                          user.data.data()["quarter"] : '', keyType: 'quarter');
+
                                         },
-                                        icon: Icon(Icons.edit,color: Colors.grey))
+                                        icon: Icon(
+                                            Icons.edit,color: Colors.grey))
                                   ],
                                 ),
 
                                 Row(
                                   mainAxisAlignment: MainAxisAlignment.end,
                                   children: [
-                                    FlatButton(onPressed: (){
+                                    TextButton(onPressed: (){
                                       setState(() {
                                         editCityOrCommuneOrQuarter = false;
                                       });
@@ -336,7 +300,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
           width: MediaQuery.of(context).size.width,
           color: Colors.teal,
           height: 45,
-          child: FlatButton(
+          child: TextButton(
               onPressed: () {
                 return alertToShow(msg: "Vous confirmez votre achat?");
               },
@@ -788,6 +752,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                       }
                     }else if(cityChosen == 'Autre'){
                       setState(() {
+                        citySelected = null;
                         editCityOrCommuneOrQuarter = true;
                       });
                       Navigator.pop(context);
@@ -812,5 +777,50 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
         textColor: Colors.white,
         backgroundColor: Colors.red,
         gravity: ToastGravity.BOTTOM);
+  }
+
+  Widget saveUserLocation({bool noLocationInListMatchUserAddress}){
+    return Form(
+      key: formKey,
+      child: Theme(
+        data: ThemeData(
+            primaryColor: Colors.white,
+            primaryColorDark: Colors.white
+        ),
+        child: TextFormField(
+          keyboardType: TextInputType.phone,
+          validator: validateAddress,
+          controller: editController,
+          cursorColor: Colors.white,
+          style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold),
+          decoration: InputDecoration(
+              prefixIcon: Icon(Icons.call,color: Colors.white),
+              /*border: OutlineInputBorder(
+                                        borderSide: BorderSide.none,
+                                        borderRadius: BorderRadius.circular(12.0)
+                                    ),*/
+              enabledBorder: new UnderlineInputBorder(
+                  borderSide: new BorderSide(color: Colors.white,width: 5.0)
+              ),
+              labelText: 'Ville',
+              labelStyle: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 18)
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  String validateAddress(String value) {
+    RegExp regExp = new RegExp(r'(^[a-zA-Z àáâãäåçèéêëìíîïðòóôõöœùúûüýÿ-]*$)');
+    if (value.length == 0) {
+      return 'Ce champ est réquis';
+    } else if (value.length < 3) {
+      return "Entrez une address correcte";
+    }
+    else if (!regExp.hasMatch(value)) {
+      return "Saisie invalide";
+    }
+    return null;
   }
 }
