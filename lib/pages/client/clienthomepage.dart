@@ -239,7 +239,15 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                     Text('${persistentStore.keys.toList()[i]}'),
 
                     Text('${persistentStore[persistentStore.keys.toList()[i]][1]}'),
+
+                    updatePrice(
+                      checked: persistentStore[persistentStore.keys.toList()[i]][0],
+                        oldPrice: persistentStore[persistentStore.keys.toList()[i]][4],
+                        countPrice: persistentStore[persistentStore.keys.toList()[i]][3],
+                        gzs: persistentStore[persistentStore.keys.toList()[i]],
+                        key: persistentStore.keys.toList()[i]),
                     CheckboxListTile(
+                      activeColor: Colors.green,
                      // title: Text('${persistentStore.keys.toList()[i]}'),
                       onChanged: (bool value) async{
                         setState((){
@@ -247,8 +255,8 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                         });
                         if(persistentStore[persistentStore.keys.toList()[i]][0] == true) {
                           setState((){
-                            gzsChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], 1, persistentStore[persistentStore.keys.toList()[i]][1]]});
-                            gzChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], 1, persistentStore[persistentStore.keys.toList()[i]][1]]});
+                            gzsChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], persistentStore[persistentStore.keys.toList()[i]][3], persistentStore[persistentStore.keys.toList()[i]][4], persistentStore.keys.toList()[i]]});
+                            gzChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], persistentStore[persistentStore.keys.toList()[i]][3], persistentStore[persistentStore.keys.toList()[i]][4],persistentStore.keys.toList()[i]]});
                           });
                         }
                         else if(persistentStore[persistentStore.keys.toList()[i]][0] == false){
@@ -358,4 +366,62 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
     getData();
   }
 
+  Widget  updatePrice({int oldPrice, int countPrice, List gzs, String key, bool checked}){
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: <Widget>[
+        InkWell(
+          child: Container(
+            child: Card(
+              color:Colors.red,
+              elevation: 10.0,
+              child: Text('-',style: TextStyle(fontSize: 23.0,fontWeight: FontWeight.bold,color: Colors.white),textAlign: TextAlign.center,),
+            ),
+            width: 35.0,
+            height: 35.0,
+          ),
+          //  //{big gz: [false, 7500, , 1, 7500], G1: [false, 2300, , 1, 2300], G2: [false, 2500, imagegz2, 1, 2500]}
+          onTap: (){
+            if(countPrice > 1){
+              setState(() {
+                int oldPrices = oldPrice;
+                int newPrice = persistentStore[key][1] - oldPrices;
+                countPrice--;
+                persistentStore.addAll({"$key" : [checked,newPrice, gzs[2],countPrice, oldPrice]});
+                if(gzsChosen.isNotEmpty){
+                  gzsChosen["$key"][0] = newPrice;
+                  gzsChosen["$key"][2] = countPrice;
+                }
+
+                print("$persistentStore  $gzsChosen");
+              });
+            }
+          },
+        ),
+        SizedBox(width: 5.0),
+        Text("$countPrice",style: TextStyle(fontSize: 20.0,fontWeight: FontWeight.bold),),
+        SizedBox(width: 5.0),
+        InkWell(
+          child: Container(
+            child: Card(
+              color:Colors.red,
+              elevation: 10.0,
+              child: Text('+',style: TextStyle(fontSize: 22.0,fontWeight: FontWeight.bold,color: Colors.white),textAlign: TextAlign.center),
+            ),
+            width: 35.0,
+            height: 35.0,
+          ),
+          onTap: (){
+            setState(() {
+              int oldPrices = oldPrice;
+              countPrice++;
+              int newPrice  = oldPrices * countPrice;
+              persistentStore.addAll({"$key" : [checked, newPrice, gzs[2],countPrice, oldPrice]});
+              print("$persistentStore  $gzsChosen");
+            });
+          },
+        ),
+      ],
+    );
+  }
 }
