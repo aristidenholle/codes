@@ -5,11 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_page_transition/flutter_page_transition.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:gzapp/pages/client/notificationpage.dart';
 import 'package:marquee/marquee.dart';
 import 'package:gzapp/pages/client/validatepage.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:intent/intent.dart' as intent;
+import 'package:intent/action.dart' as action;
 import 'ordertrack.dart';
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
@@ -58,6 +61,15 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
           elevation: 0.0,
           title: Text('Recharge ton gaz'),
           actions: [
+            IconButton(icon: Icon(Icons.call,size: 30),
+                onPressed: (){
+                  Fluttertoast.showToast(
+                      msg:"Nous sommes à votre écoute!",
+                      backgroundColor: Colors.green,
+                      textColor: Colors.white);
+                  return serviceCall();
+
+            }),
             StreamBuilder(
                 stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
                     .collection("notification")
@@ -154,8 +166,8 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                 height: 30,
                 child: Center(
                   child: Marquee(
-                    text: "un service à votre écoute 24h/24 7j/7",
-                    style: TextStyle(color: Colors.red, fontSize: 17.0,fontWeight: FontWeight.bold),
+                    text: "               Un service à votre écoute 24h/24 7j/7",
+                    style: TextStyle(color: Colors.red, fontSize: 17.0),
                     scrollAxis: Axis.horizontal,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     blankSpace: 5.0,
@@ -233,56 +245,76 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
               },
               child: Text('SUIVANT',style: TextStyle(color: Colors.white),)),
         ),
-      )
+        
+      ),
     );
   }
    Widget buildGzChoice(){
     if(gzsList.isNotEmpty){
-      List<Widget> lgz = [];
-      for(var i = 0; i < gzsList.keys.length;  i++){
-        Widget g = Card(
-          child: Container(
-            margin: const EdgeInsets.only(top: 25),
-            width: MediaQuery.of(context).size.width,
-            child: Row(
-              children: [
-                Container(
-                  child: Text('${gzsList[gzsList.keys.toList()[i]][2]}'),
+      return GridView.builder(
+          shrinkWrap: true,
+          itemCount: gzsList.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2,childAspectRatio: 0.6),
+          itemBuilder: (context, i){
+            //WHEN YOU PUT i after context param IT DO AN INFITE LIST
+            return Card(
+              shape: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide(width: 2,color: Colors.blueGrey)
+              ),
+              child: Container(
+                child: Column(
+                  children: [
+                    Container(
+                      margin: const EdgeInsets.only(top: 5),
+                      color: Colors.grey,
+                      height: 150,
+                      child: Text('${gzsList[gzsList.keys.toList()[i]][2]}'),
+                    ),
+
+                    Text('${gzsList.keys.toList()[i]}'),
+
+                    Padding(
+                      padding: const EdgeInsets.only(top: 15),
+                      child: updatePrice(
+                          checked: gzsList[gzsList.keys.toList()[i]][0],
+                          oldPrice: gzsList[gzsList.keys.toList()[i]][4],
+                          countPrice: gzsList[gzsList.keys.toList()[i]][3],
+                          gzs: gzsList[gzsList.keys.toList()[i]],
+                          key: gzsList.keys.toList()[i]),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: CheckboxListTile(
+                        activeColor: Colors.green,
+                        // title: Text('${persistentStore.keys.toList()[i]}'),
+                        onChanged: (bool value) async{
+                          setState((){
+                            gzsList[gzsList.keys.toList()[i]][0] = value;
+                          });
+                          if(gzsList[gzsList.keys.toList()[i]][0] == true) {
+                            setState((){
+                              gzsChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], gzsList[gzsList.keys.toList()[i]][3], gzsList[gzsList.keys.toList()[i]][4], gzsList.keys.toList()[i]]});
+                              gzChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], gzsList[gzsList.keys.toList()[i]][3], gzsList[gzsList.keys.toList()[i]][4],gzsList.keys.toList()[i]]});
+                            });
+                          }
+                          else if(gzsList[gzsList.keys.toList()[i]][0] == false){
+                            setState(() {
+                              gzsChosen.remove(gzsList.keys.toList()[i]);
+                              gzChosen.remove(gzsList.keys.toList()[i]);
+                            });
+                          }
+
+                          print('$gzChosen');
+                        }, value: gzsList[gzsList.keys.toList()[i]][0],
+
+                      ),
+                    )
+                  ],
                 ),
-                Expanded(
-                  child: CheckboxListTile(
-                    title: Text('${gzsList.keys.toList()[i]}'),
-                    onChanged: (bool value) async{
-                      setState((){
-                        gzsList[gzsList.keys.toList()[i]][0] = value;
-                      });
-                      if(gzsList[gzsList.keys.toList()[i]][0] == true) {
-                        setState((){
-                          gzsChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], 1, gzsList[gzsList.keys.toList()[i]][1]]});
-                          gzChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], 1, gzsList[gzsList.keys.toList()[i]][1]]});
-                        });
-                      }
-                      else if(gzsList[gzsList.keys.toList()[i]][0] == false){
-                        setState(() {
-                          gzsChosen.remove(gzsList.keys.toList()[i]);
-                          gzChosen.remove(gzsList.keys.toList()[i]);
-                        });
-                      }
-
-                      print('$gzChosen');
-                    }, value: gzsList[gzsList.keys.toList()[i]][0],
-
-                  ),
-                )
-              ],
-            ),
-          ),
-        );
-
-        lgz.add(g);
-      }
-
-      return Text('');
+              ),
+            );
+          });
     }else{
       return GridView.builder(
         shrinkWrap: true,
@@ -541,5 +573,12 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
         styleInformation: bigTextStyleInformation);
     var platformChannelSpecifics = NotificationDetails(androidPlatformChannelSpecifics, null);
     await flutterLocalNotificationsPlugin.show(0, '$title', '$msg', platformChannelSpecifics);
+  }
+
+  serviceCall() async {
+    return intent.Intent()
+      ..setAction(action.Action.ACTION_DIAL)
+      ..setData(Uri(scheme: 'tel', path: '+2250153441343'))
+      ..startActivity().catchError((e) => print(e));
   }
 }

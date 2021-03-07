@@ -110,7 +110,7 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
               child: Text('${order.keys.toList()[i]}'),
             ),
             Container(
-              child: Text('${order[order.keys.toList()[i]][0]}'),
+              child: Text('${price(price: order[order.keys.toList()[i]][0])}'),
             ),
           ],
         ),
@@ -120,5 +120,18 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
     }
 
     return lgz;
+  }
+
+  String price({int price}){
+    return price < 1000 ? '$price Frcfa' :
+    price >= 1000 &&  price < 10000 ?
+    '${price.toString().substring(0,1)+'.'+price.toString().substring(1)} Frcfa':
+    price >= 10000 && price < 100000  ?
+    '${price.toString().substring(0,2)+'.'+price.toString().substring(2)} Frcfa' :
+    price >= 100000 && price < 1000000  ?
+    '${price.toString().substring(0,3)+'.'+price.toString().substring(3)} Frcfa' :
+    price >= 1000000 && price < 1000000000  ?
+    '$price Frcfa' : '$price Frcfa';
+
   }
 }
