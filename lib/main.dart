@@ -32,25 +32,22 @@ void main() async {
     print('ONE SIGNAL ERROR IN MAIN $e');
   }
 
-  //var initializationSettingsAndroid = AndroidInitializationSettings('taxsecurelogosc');
   // Note: permissions aren't requested here just to demonstrate that can be done later using the `requestPermissions()` method
   // of the `IOSFlutterLocalNotificationsPlugin` class
-/*  var initializationSettingsIOS = IOSInitializationSettings(
+
+  const AndroidInitializationSettings initializationSettingsAndroid =
+  AndroidInitializationSettings('gazcylindersb');
+
+ var initializationSettingsIOS = IOSInitializationSettings(
       requestAlertPermission: false,
       requestBadgePermission: false,
       requestSoundPermission: false,
-      onDidReceiveLocalNotification:
-          (int id, String title, String body, String payload) async {
+      onDidReceiveLocalNotification: (int id, String title, String body, String payload) async {
         print('id: $id, title: $title');
       });
   var initializationSettings = InitializationSettings(
       initializationSettingsAndroid, initializationSettingsIOS);
-  await flutterLocalNotificationsPlugin.initialize(initializationSettings,
-      onSelectNotification: (String payload) async {
-    if (payload != null) {
-      debugPrint('notification payload: ' + payload);
-    }
-  });*/
+  await flutterLocalNotificationsPlugin.initialize(initializationSettings);
 
 }
 

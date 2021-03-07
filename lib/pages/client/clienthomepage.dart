@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_icons/flutter_icons.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_page_transition/flutter_page_transition.dart';
 import 'package:gzapp/pages/client/notificationpage.dart';
 import 'package:marquee/marquee.dart';
@@ -10,6 +11,9 @@ import 'package:gzapp/pages/client/validatepage.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'ordertrack.dart';
+
+FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
+FlutterLocalNotificationsPlugin();
 
 
 class ClientHomePage extends StatefulWidget {
@@ -39,6 +43,8 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
   @override
   void initState() {
     checkIfFirstGzNameSaved();
+    showBigTextNotification(msg: "Votre gaz est fini? rechargez la maintenant!!",
+        title: '${DateTime.now().hour < 12 ? 'Bonjour et bienvenue':'Bonsoir et bienvenue'}');
     oneSignalConfig();
     super.initState();
   }
@@ -378,16 +384,6 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
     SharedPreferences get = await SharedPreferences.getInstance();
     var getFirstKeyName = get.getString(keyToCheckIFValueItSaved);
     var getGzNumber = get.getInt(gzNumber);
-
-    //({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage']]});
-    for(var i = 0; i < getGzNumber; i++){
-      setState(() {
-        persistentStore.addAll(
-            {"${get.getString("keyName$i")}" : [get.getBool("keyBool$i"), get.getInt("keyPrice$i"),get.getString("keyImg$i"),1,get.getInt("keyPrice$i")]});
-      });
-    }
-
-    print('GZ LIST $persistentStore');
 /*    for(var i = 0; i < gzsList.keys.length; i++){
       var getGzBool = get.getString("keyBool$i");
       if(getGzBool != null){
@@ -413,10 +409,19 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
   void checkIfFirstGzNameSaved() async{
     SharedPreferences get = await SharedPreferences.getInstance();
     var getFirstKeyName = get.getString(keyToCheckIFValueItSaved);
+    var getGzNumber = get.getInt(gzNumber);
 
     if(getFirstKeyName != null){
       print('DATA IS SAVED IN PERSISTENT STORAGE $getFirstKeyName');
+      //({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage']]});
+      for(var i = 0; i < getGzNumber; i++){
+        setState(() {
+          persistentStore.addAll(
+              {"${get.getString("keyName$i")}" : [get.getBool("keyBool$i"), get.getInt("keyPrice$i"),get.getString("keyImg$i"),1,get.getInt("keyPrice$i")]});
+        });
+      }
 
+      print('GZ LIST $persistentStore');
     }else{
       print('DATA NOT SAVED YET, MAKE FIRST READ');
       FirebaseFirestore.instance.collection('Gzlist')
@@ -430,7 +435,6 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
         setData(gzList: gzsList);
       }).catchError((er) => print('UNABLE TO GET GZ LIST $er'));
     }
-    getData();
   }
 
   Widget  updatePrice({int oldPrice, int countPrice, List gzs, String key, bool checked}){
@@ -522,5 +526,20 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
     OneSignal.shared.setNotificationReceivedHandler((notification) {
       return notification.jsonRepresentation().replaceAll("\\n", "\n");
     });
+  }
+
+  Future<void> showBigTextNotification({String title, String msg}) async {
+    var bigTextStyleInformation = BigTextStyleInformation('$msg',
+        htmlFormatBigText: true,
+        contentTitle: '<b>$title</b>',
+        htmlFormatContentTitle: true,
+        htmlFormatSummaryText: true);
+    var androidPlatformChannelSpecifics = AndroidNotificationDetails(
+        '$title',
+        '$title',
+        '$msg',
+        styleInformation: bigTextStyleInformation);
+    var platformChannelSpecifics = NotificationDetails(androidPlatformChannelSpecifics, null);
+    await flutterLocalNotificationsPlugin.show(0, '$title', '$msg', platformChannelSpecifics);
   }
 }
