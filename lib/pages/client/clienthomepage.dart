@@ -54,6 +54,10 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
   String text = '';
   GeolocationData geolocationData;
 
+  String userPlayerIdKey = "userPlayerId";
+
+
+
   Future<void> getIp() async {
     geolocationData = await GeolocationAPI.getData();
     if (geolocationData != null) {
@@ -116,7 +120,9 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
           actions: [
             IconButton(icon: Icon(Icons.settings,size: 30),
                 onPressed: (){
-              showModalBottomSheet(context: context,
+                  print('LIST1 ${gzsList}');
+                  print('LIST ${persistentStore}');
+              /*showModalBottomSheet(context: context,
                   builder: (context) {
                     return Container(
                       color: Colors.blueGrey,
@@ -143,7 +149,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                        ],
                      ),
                     );
-                  });
+                  });*/
 
             }),
             StreamBuilder(
@@ -204,7 +210,9 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                       onPressed: (){
                         Navigator.push(
                             context, PageTransition(
-                            child: OrderTrackPage(),
+                            child: OrderTrackPage(
+                              userIdPlayer: playerId,
+                                gzList: gzsList.isNotEmpty ? gzsList : persistentStore),
                             type: PageTransitionType.fadeIn,
                             duration: Duration(milliseconds: 500)
                         ));
@@ -257,8 +265,9 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                 ),
               ),
 
+
               Expanded(
-                child: buildGzChoice(),
+                child: buildGzChoice(data: gzsList.isNotEmpty ? gzsList : persistentStore),
               ),
             ],
           ),
@@ -324,204 +333,108 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       ),
     );
   }
-   Widget buildGzChoice(){
-    if(gzsList.isNotEmpty){
-      return GridView.builder(
-          shrinkWrap: true,
-          itemCount: gzsList.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2,childAspectRatio: 0.6),
-          itemBuilder: (context, i){
-            //WHEN YOU PUT i after context param IT DO AN INFITE LIST
-            return Card(
-              shape: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(width: 2,color: Colors.blueGrey)
-              ),
-              child: Container(
-                child: Column(
-                  children: [
-                    CachedNetworkImage(
-                      imageBuilder: (context, imageProvider) =>
-                          Container(
-                            height: 150,
-                            decoration: BoxDecoration(
-                              //border:Border.all(width: 1, color: Color.fromRGBO(14,47,68,1)),
-                              image: DecorationImage(
-                                  image: imageProvider,
-                                  fit: BoxFit.cover),
-                            ),
-                          ),
+   Widget buildGzChoice({Map<String, List> data}){
+     return GridView.builder(
+         shrinkWrap: true,
+         itemCount: data.length,
+         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2,childAspectRatio: 0.59),
+         itemBuilder: (context, i){
+           //WHEN YOU PUT i after context param IT DO AN INFITE LIST
+           return Card(
+             shape: OutlineInputBorder(
+                 borderRadius: BorderRadius.circular(12),
+                 borderSide: BorderSide(width: 2,color: Colors.blueGrey)
+             ),
+             child: Container(
+               child: Column(
+                 children: [
+                   Padding(
+                     padding: const EdgeInsets.only(top: 5),
+                     child: CachedNetworkImage(
+                       imageBuilder: (context, imageProvider) =>
+                           Container(
+                             height: 150,
+                             decoration: BoxDecoration(
+                               //border:Border.all(width: 1, color: Color.fromRGBO(14,47,68,1)),
+                               image: DecorationImage(
+                                   image: imageProvider,
+                                   fit: BoxFit.cover),
+                             ),
+                           ),
 
-                      imageUrl: '${gzsList[gzsList.keys.toList()[i]][2]}',
-                      progressIndicatorBuilder: (context, url, downloadProgress) {
-                        return Container(
-                          margin: const EdgeInsets.only(left: 5.0),
-                          height: 150,
-                          child: Center(
-                            child: CircularProgressIndicator(
-                              value: downloadProgress.progress,
-                              valueColor: AlwaysStoppedAnimation(
-                                  Color.fromRGBO(
-                                      14, 47, 68, 1)),
-                            ),
-                          ),
-                        );
-                      },
-                      errorWidget: (context, url, object) {
-                        return Container(
-                          margin: const EdgeInsets.only(left: 5.0),
-                          height: 150,
-                          child: Center(child: Icon(Icons.photo)),
-                        );
-                      },
-                    ),
+                       imageUrl: '${data[data.keys.toList()[i]][2]}',
+                       progressIndicatorBuilder: (context, url, downloadProgress) {
+                         return Container(
+                           margin: const EdgeInsets.only(left: 5.0),
+                           height: 150,
+                           child: Center(
+                             child: CircularProgressIndicator(
+                               value: downloadProgress.progress,
+                               valueColor: AlwaysStoppedAnimation(
+                                   Color.fromRGBO(
+                                       14, 47, 68, 1)),
+                             ),
+                           ),
+                         );
+                       },
+                       errorWidget: (context, url, object) {
+                         return Container(
+                           margin: const EdgeInsets.only(left: 5.0),
+                           height: 150,
+                           child: Center(child: Text('')),
+                         );
+                       },
+                     ),
+                   ),
 
-                    Text('${gzsList.keys.toList()[i]}'),
-
-                    Padding(
-                      padding: const EdgeInsets.only(top: 15),
-                      child: updatePrice(
-                          checked: gzsList[gzsList.keys.toList()[i]][0],
-                          oldPrice: gzsList[gzsList.keys.toList()[i]][4],
-                          countPrice: gzsList[gzsList.keys.toList()[i]][3],
-                          gzs: gzsList[gzsList.keys.toList()[i]],
-                          key: gzsList.keys.toList()[i]),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: CheckboxListTile(
-                        activeColor: Colors.green,
-                        // title: Text('${persistentStore.keys.toList()[i]}'),
-                        onChanged: (bool value) async{
-                          setState((){
-                            gzsList[gzsList.keys.toList()[i]][0] = value;
-                          });
-                          if(gzsList[gzsList.keys.toList()[i]][0] == true) {
-                            setState((){
-                              gzsChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], gzsList[gzsList.keys.toList()[i]][3], gzsList[gzsList.keys.toList()[i]][4], gzsList.keys.toList()[i]]});
-                              gzChosen.addAll({"${gzsList.keys.toList()[i]}": [gzsList[gzsList.keys.toList()[i]][1],gzsList[gzsList.keys.toList()[i]][2], gzsList[gzsList.keys.toList()[i]][3], gzsList[gzsList.keys.toList()[i]][4],gzsList.keys.toList()[i]]});
-                            });
-                          }
-                          else if(gzsList[gzsList.keys.toList()[i]][0] == false){
-                            setState(() {
-                              gzsChosen.remove(gzsList.keys.toList()[i]);
-                              gzChosen.remove(gzsList.keys.toList()[i]);
-                            });
-                          }
-
-                          print('$gzChosen');
-                        }, value: gzsList[gzsList.keys.toList()[i]][0],
-
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            );
-          });
-    }else{
-      return GridView.builder(
-        shrinkWrap: true,
-          itemCount: persistentStore.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2,childAspectRatio: 0.59),
-          itemBuilder: (context, i){
-          //WHEN YOU PUT i after context param IT DO AN INFITE LIST
-            return Card(
-              shape: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(width: 2,color: Colors.blueGrey)
-              ),
-              child: Container(
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 5),
-                      child: CachedNetworkImage(
-                        imageBuilder: (context, imageProvider) =>
-                            Container(
-                              height: 150,
-                              decoration: BoxDecoration(
-                                //border:Border.all(width: 1, color: Color.fromRGBO(14,47,68,1)),
-                                image: DecorationImage(
-                                    image: imageProvider,
-                                    fit: BoxFit.cover),
-                              ),
-                            ),
-
-                        imageUrl: '${persistentStore[persistentStore.keys.toList()[i]][2]}',
-                        progressIndicatorBuilder: (context, url, downloadProgress) {
-                          return Container(
-                            margin: const EdgeInsets.only(left: 5.0),
-                            height: 150,
-                            child: Center(
-                              child: CircularProgressIndicator(
-                                value: downloadProgress.progress,
-                                valueColor: AlwaysStoppedAnimation(
-                                    Color.fromRGBO(
-                                        14, 47, 68, 1)),
-                              ),
-                            ),
-                          );
-                        },
-                        errorWidget: (context, url, object) {
-                          return Container(
-                            margin: const EdgeInsets.only(left: 5.0),
-                            height: 150,
-                            child: Center(child: Text('')),
-                          );
-                        },
-                      ),
-                    ),
-
-                    Padding(
-                      padding: const EdgeInsets.only(top: 10),
-                      child: Text('${persistentStore.keys.toList()[i]}'),
-                    ),
+                   Padding(
+                     padding: const EdgeInsets.only(top: 10),
+                     child: Text('${data.keys.toList()[i]}'),
+                   ),
 
 
-                    Padding(
-                      padding: const EdgeInsets.only(top: 22),
-                      child: updatePrice(
-                        checked: persistentStore[persistentStore.keys.toList()[i]][0],
-                          oldPrice: persistentStore[persistentStore.keys.toList()[i]][4],
-                          countPrice: persistentStore[persistentStore.keys.toList()[i]][3],
-                          gzs: persistentStore[persistentStore.keys.toList()[i]],
-                          key: persistentStore.keys.toList()[i]),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.only(top: 0),
-                      child: CheckboxListTile(
-                        activeColor: Colors.green,
-                       // title: Text('${persistentStore.keys.toList()[i]}'),
-                        onChanged: (bool value) async{
-                          setState((){
-                            persistentStore[persistentStore.keys.toList()[i]][0] = value;
-                          });
-                          if(persistentStore[persistentStore.keys.toList()[i]][0] == true) {
-                            setState((){
-                              gzsChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], persistentStore[persistentStore.keys.toList()[i]][3], persistentStore[persistentStore.keys.toList()[i]][4], persistentStore.keys.toList()[i]]});
-                              gzChosen.addAll({"${persistentStore.keys.toList()[i]}": [persistentStore[persistentStore.keys.toList()[i]][1],persistentStore[persistentStore.keys.toList()[i]][2], persistentStore[persistentStore.keys.toList()[i]][3], persistentStore[persistentStore.keys.toList()[i]][4],persistentStore.keys.toList()[i]]});
-                            });
-                          }
-                          else if(persistentStore[persistentStore.keys.toList()[i]][0] == false){
-                            setState(() {
-                              gzsChosen.remove(persistentStore.keys.toList()[i]);
-                              gzChosen.remove(persistentStore.keys.toList()[i]);
-                            });
-                          }
+                   Padding(
+                     padding: const EdgeInsets.only(top: 22),
+                     child: updatePrice(
+                       gzListWitchWillBeUpdated: data,
+                         checked: data[data.keys.toList()[i]][0],
+                         oldPrice: data[data.keys.toList()[i]][4],
+                         countPrice: data[data.keys.toList()[i]][3],
+                         gzs: data[data.keys.toList()[i]],
+                         key: data.keys.toList()[i]),
+                   ),
+                   Padding(
+                     padding: const EdgeInsets.only(top: 0),
+                     child: CheckboxListTile(
+                       activeColor: Colors.green,
+                       // title: Text('${data.keys.toList()[i]}'),
+                       onChanged: (bool value) async{
+                         setState((){
+                           data[data.keys.toList()[i]][0] = value;
+                         });
+                         if(data[data.keys.toList()[i]][0] == true) {
+                           setState((){
+                             gzsChosen.addAll({"${data.keys.toList()[i]}": [data[data.keys.toList()[i]][1],data[data.keys.toList()[i]][2], data[data.keys.toList()[i]][3], data[data.keys.toList()[i]][4],data[data.keys.toList()[i]][5],data.keys.toList()[i]]});
+                             gzChosen.addAll({"${data.keys.toList()[i]}": [data[data.keys.toList()[i]][1],data[data.keys.toList()[i]][2], data[data.keys.toList()[i]][3], data[data.keys.toList()[i]][4],data[data.keys.toList()[i]][5],data.keys.toList()[i]]});
+                           });
+                         }
+                         else if(data[data.keys.toList()[i]][0] == false){
+                           setState(() {
+                             gzsChosen.remove(data.keys.toList()[i]);
+                             gzChosen.remove(data.keys.toList()[i]);
+                           });
+                         }
 
-                          print('$gzChosen');
-                        }, value: persistentStore[persistentStore.keys.toList()[i]][0],
+                         print('$gzChosen');
+                       }, value: data[data.keys.toList()[i]][0],
 
-                      ),
-                    )
-                  ],
-                ),
-              ),
-            );
-          });
-    }
-
+                     ),
+                   )
+                 ],
+               ),
+             ),
+           );
+         });
 }
 
 //TO AVOID MANY READ IN FIREBASE
@@ -547,6 +460,10 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
 
     for(var i = 0; i < gzsList.keys.length; i++){
       set.setString("keyImg$i", gzsList[gzsList.keys.toList()[i]][2]);
+    }
+
+    for(var i = 0; i < gzsList.keys.length; i++){
+      set.setString("keyId$i", gzsList[gzsList.keys.toList()[i]][5]);
     }
 
     getData();
@@ -589,7 +506,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       for(var i = 0; i < getGzNumber; i++){
         setState(() {
           persistentStore.addAll(
-              {"${get.getString("keyName$i")}" : [get.getBool("keyBool$i"), get.getInt("keyPrice$i"),get.getString("keyImg$i"),1,get.getInt("keyPrice$i")]});
+              {"${get.getString("keyName$i")}" : [get.getBool("keyBool$i"), get.getInt("keyPrice$i"),get.getString("keyImg$i"),1,get.getInt("keyPrice$i"),get.getString("keyId$i"),get.getString("keyName$i")]});
         });
       }
 
@@ -600,7 +517,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
           .get().then((value){
         for(QueryDocumentSnapshot gz in value.docs){
           setState(() {
-            gzsList.addAll({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage'], 1, gz.data()['gzprice']]});
+            gzsList.addAll({"${gz.data()['gzname']}": [false, gz.data()['gzprice'], gz.data()['gzimage'], 1, gz.data()['gzprice'], gz.id,gz.data()['gzname']]});
           });
         }
 
@@ -609,7 +526,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
     }
   }
 
-  Widget  updatePrice({int oldPrice, int countPrice, List gzs, String key, bool checked}){
+  Widget  updatePrice({int oldPrice, int countPrice, List gzs, String key, bool checked,Map<String, List> gzListWitchWillBeUpdated}){
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: <Widget>[
@@ -630,15 +547,15 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
             if(countPrice > 1){
               setState(() {
                 int oldPrices = oldPrice;
-                int newPrice = persistentStore[key][1] - oldPrices;
+                int newPrice = gzListWitchWillBeUpdated[key][1] - oldPrices;
                 countPrice--;
-                persistentStore.addAll({"$key" : [checked,newPrice, gzs[2],countPrice, oldPrice]});
+                gzListWitchWillBeUpdated.addAll({"$key" : [checked,newPrice, gzs[2],countPrice, oldPrice, gzs[5],key]});
                 if(gzsChosen.keys.length >= 1 && gzsChosen["$key"] != null){
                   gzsChosen["$key"][0] = newPrice;
                   gzsChosen["$key"][2] = countPrice;
                 }
 
-                print("$persistentStore  $gzsChosen");
+                print("$gzsChosen");
               });
             }
           },
@@ -670,13 +587,13 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
               int oldPrices = oldPrice;
               countPrice++;
               int newPrice  = oldPrices * countPrice;
-              persistentStore.addAll({"$key" : [checked, newPrice, gzs[2],countPrice, oldPrice]});
-              print("$persistentStore  $gzsChosen");
+              gzListWitchWillBeUpdated.addAll({"$key" : [checked, newPrice, gzs[2],countPrice, oldPrice,gzs[5],key]});
+              //print("$gzListWitchWillBeUpdated  $gzsChosen");
               if(gzsChosen.keys.length >= 1 && gzsChosen["$key"] != null){
                 gzsChosen["$key"][0] = newPrice;
                 gzsChosen["$key"][2] = countPrice;
               }
-              print("$persistentStore  $gzsChosen");
+              print("$gzListWitchWillBeUpdated");
             });
           },
         ),
@@ -698,6 +615,14 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
     OneSignal.shared.setNotificationReceivedHandler((notification) {
       return notification.jsonRepresentation().replaceAll("\\n", "\n");
     });
+  }
+
+  getUserPlayerId() async{
+    SharedPreferences get = await SharedPreferences.getInstance();
+    var playerID = get.getString(userPlayerIdKey);
+    if(playerID != null){
+
+    }
   }
 
   Future<void> showBigTextNotification({String title, String msg}) async {

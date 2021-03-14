@@ -601,7 +601,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
           },
         ),
         SizedBox(width: 5.0),
-        Text("$countPrice",style: TextStyle(fontSize: 20.0,fontWeight: FontWeight.bold),),
+        Text("$countPrice",style: TextStyle(fontSize: 20.0,fontWeight: FontWeight.bold)),
         SizedBox(width: 5.0),
         TextButton(
           child: Container(
@@ -838,6 +838,9 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
         desc:"Nous avons bien réçu votre commande",
         btnOkOnPress: () {
           print('YES');
+          setState(() {
+            listGzChosen.clear();
+          });
           Navigator.pop(context);
         }
     ).show();

@@ -2,15 +2,28 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_page_transition/flutter_page_transition.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:gzapp/pages/client/historic.dart';
 
 class OrderTrackPage extends StatefulWidget {
+  final Map<String, List> gzList;
+  final String userIdPlayer;
+
+  const OrderTrackPage({Key key, this.gzList, this.userIdPlayer}) : super(key: key);
   @override
   _OrderTrackPageState createState() => _OrderTrackPageState();
 }
 
 class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStateMixin{
+
+  @override
+  void initState() {
+    print("Track Page ${widget.gzList}");
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -20,7 +33,14 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
         centerTitle: true,
         actions: [
           IconButton(icon: Icon(Icons.history,color: Colors.white), onPressed: (){
-
+            Navigator.push(
+                context, PageTransition(
+                child: HistoricPage(
+                  playerId: widget.userIdPlayer,
+                    gzsList: widget.gzList),
+                type: PageTransitionType.fadeIn,
+                duration: Duration(milliseconds: 500)
+            ));
           })
         ],
       ),
@@ -49,7 +69,6 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
             }
 
             //print('${snapshot.data.docs.first.data()['order']}');
-            Map<String, dynamic> order = snapshot.data.docs.first.data()['order'];
             //print(mp.map((key, value) =>  MapEntry(key, value)));
             return ListView.builder(
               itemCount: snapshot.data.docs.length,
@@ -58,7 +77,7 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
                   color: (snapshot.data.docs[i].data()['confirmed'] != null && snapshot.data.docs[i].data()['confirmed'] == 'yes')
                   ? Colors.green[200]: Colors.white,
                   child: ExpansionTile(
-                      title: (snapshot.data.docs[i].data()['confirmed'] != null && snapshot.data.docs[i].data()['confirmed'] == 'yes')
+                      title: !(snapshot.data.docs[i].data()['confirmed'] != null && snapshot.data.docs[i].data()['confirmed'] == 'yes')
                           ? Row(
                         mainAxisAlignment: MainAxisAlignment.start,
                         children: [
@@ -72,13 +91,29 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
                                     msg: 'Veuillez taper deux fois pour supprimer!');
                               },
                                 onDoubleTap: (){
+                                  List orderId  = [];
+                                  snapshot.data.docs[i].data()['order'].keys.toList().forEach((order){
+                                    orderId.add(snapshot.data.docs[i].data()['order'][order][4]);
+                                  });
                                   FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
                                       .collection("Historic")
-                                      .doc().set({
-                                    "orderId":snapshot.data.docs[i].id,
-                                  }).catchError((err) => print('error to set $err'));
+                                      .doc('${orderId.first}').set({
+                                    //I GAME WITH MAP SAVE IN BD
+                                    "orderId":FieldValue.arrayUnion(orderId),
+                                    "userName" :"${snapshot.data.docs[i].data()['userName']}" ,
+                                    "userLocation" :"${snapshot.data.docs[i].data()['userLocation']}" ,
+                                    "phoneNumber" : "${snapshot.data.docs[i].data()['phoneNumber']}",
+                                    "secondNumber": "${snapshot.data.docs[i].data()['secondNumber']}",
+                                    "createAt":'${DateTime.now().day}/${DateTime.now().month}/${DateTime.now().year} à ${DateTime.now().hour}h:${DateTime.now().minute}min',
+                                  },SetOptions(merge: true)).catchError((err) => print('error to set $err'));
+
                                   FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
                                       .collection("reservation").doc(snapshot.data.docs[i].id).delete();
+                                  Fluttertoast.showToast(
+                                      msg:"Suppression éffectuée",
+                                      backgroundColor: Colors.green,
+                                      textColor: Colors.white);
+                                  print(widget.gzList);
                                 },
                                 child: Icon(Icons.delete, color: Colors.redAccent)),
                           )
@@ -107,7 +142,7 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
                       ),
                       Container(
                         child: Column(
-                          children: buildGzChoice(order: order),
+                          children: buildGzChoice(order: snapshot.data.docs[i].data()['order']),
                         ),
                       )
                     ],
