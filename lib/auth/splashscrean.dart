@@ -162,7 +162,12 @@ signUorLogin() async{
           password: pass)
           .timeout(Duration(seconds: 15), onTimeout: timeOut)
           .then((value) {
-      print('U id ${value.user.uid}');
+      print('U id ${value.user.uid}');//type
+
+    FirebaseFirestore.instance.collection('users').doc('${value.user.uid}').set({
+      'type': 'client'
+    }).catchError((err) => print('set user data $err'));
+
         Navigator.pushReplacement(context, PageTransition(
             child: new ClientHomePage(),
             type: PageTransitionType.fadeIn,

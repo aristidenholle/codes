@@ -1,12 +1,18 @@
+import 'dart:convert';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_animated_dialog/flutter_animated_dialog.dart';
 import 'package:flutter_icons/flutter_icons.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_page_transition/flutter_page_transition.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:gps/gps.dart';
+import 'package:gzapp/auth/splashscrean.dart';
 import 'package:gzapp/pages/client/notificationpage.dart';
+import 'package:ip_geolocation_api/ip_geolocation_api.dart';
 import 'package:marquee/marquee.dart';
 import 'package:gzapp/pages/client/validatepage.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
@@ -14,6 +20,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intent/intent.dart' as intent;
 import 'package:intent/action.dart' as action;
 import 'ordertrack.dart';
+import 'package:http/http.dart' as http;
+import 'package:http_client/console.dart';
 
 FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
 FlutterLocalNotificationsPlugin();
@@ -43,8 +51,53 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
 
   String playerId;
 
+  String text = '';
+  GeolocationData geolocationData;
+
+  Future<void> getIp() async {
+    geolocationData = await GeolocationAPI.getData();
+    if (geolocationData != null) {
+      setState(() {
+        text = geolocationData.ip;
+       print('IP  ${jsonEncode(geolocationData.toJson())}');
+      });
+    }
+  }
+
+  Future getUserLocation() async{
+    print('IO ADD $text');
+    await http.get('https://api.ipgeolocation.io/ipgeo?apiKey=c7d3a3517825444288bc280cc82bf0ed&ip=$text')
+        .then((value) => print('RESULT ${value.body}'))
+        .catchError((err) =>print('ERROR $err'));
+  }
+
+  Future location() async {
+  final client = ConsoleClient();
+  final rs = await client.send(Request('GET', 'https://api.ipgeolocation.io/ipgeo?apiKey=c7d3a3517825444288bc280cc82bf0ed&ip=$text'));
+  final textContent = await rs.readAsString();
+  print(textContent);
+  await client.close();
+}
+
+  Future getLocation() async {//'http://ip-api.com/json/$text'
+
+    await http.get('https://www.iplocate.io/api/lookup/$text')//https://www.iplocate.io/api/lookup/
+    // 'http://ipwhois.app/json/$text' less than 10k request per month
+    //https://ip-geolocation.whoisxmlapi.com/api/v1?apiKey=at_9bslGGkP0EjDl5YcaySG5PYvWLrWT&ipAddress=$text
+        .then((value) => print('RESULT ${value.body}'))
+        .catchError((err) =>print('ERROR $err'));
+  }
+
+  Future getClientLocation() async{
+    var latlng = await Gps.currentGps();
+      print(latlng.lat);
+      print(latlng.lng);
+
+  }
+
+
   @override
-  void initState() {
+  void initState() {//"latitude":"5.3599517","longitude":"-4.0082563"
     checkIfFirstGzNameSaved();
     showBigTextNotification(msg: "Votre gaz est fini? rechargez la maintenant!!",
         title: '${DateTime.now().hour < 12 ? 'Bonjour et bienvenue':'Bonsoir et bienvenue'}');
@@ -61,19 +114,41 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
           elevation: 0.0,
           title: Text('Recharge ton gaz'),
           actions: [
-            IconButton(icon: Icon(Icons.call,size: 30),
+            IconButton(icon: Icon(Icons.settings,size: 30),
                 onPressed: (){
-                  Fluttertoast.showToast(
-                      msg:"Nous sommes à votre écoute!",
-                      backgroundColor: Colors.green,
-                      textColor: Colors.white);
-                  return serviceCall();
+              showModalBottomSheet(context: context,
+                  builder: (context) {
+                    return Container(
+                      color: Colors.blueGrey,
+                      height: 50,
+                     child: Column(
+                       children: [
+                         Row(
+                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                           children: [
+                             TextButton.icon(onPressed: (){
+                               Fluttertoast.showToast(
+                                   msg:"Nous sommes à votre écoute!",
+                                   backgroundColor: Colors.green,
+                                   textColor: Colors.white);
+                               return serviceCall();
+                             }, icon: Icon(Icons.call,size: 30,color: Colors.white), label: Text('Contactez-nous',
+                                 style: TextStyle(fontSize: 17,color: Colors.white))),
+
+                             IconButton(icon: Icon(FlutterIcons.exit_to_app_mco,color: Colors.grey), onPressed: (){
+                               return disconnection(msg: 'Voulez-vous vraiment vous déconnter?');
+                             })
+                           ],
+                         )
+                       ],
+                     ),
+                    );
+                  });
 
             }),
             StreamBuilder(
-                stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
-                    .collection("notification")
-                    .snapshots(),
+                stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid)
+                    .collection("notification").snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.hasError) {
                     return Text('');
@@ -104,7 +179,8 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                                 borderRadius: BorderRadius.circular(16.0)
                             ),
                             child: Center(
-                                child: Text('${snapshot?.data?.docs?.length}',style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold,fontSize: 17))),
+                                child: Text('${snapshot?.data?.docs?.length == 0 ? "0" : snapshot?.data?.docs?.length}',
+                                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold,fontSize: 17))),
                           )
                         ],
                       ),
@@ -113,16 +189,14 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                 }
             ),
             StreamBuilder(
-                stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
+                stream: FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser?.uid)
                     .collection("reservation")
                     .snapshots(),
                 builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
                   if (snapshot.hasError) {
                     return Text('');
                   } else if (!snapshot.hasData) {
-                    return Text('');
-                  }else if (snapshot?.data?.docs?.length == 0) {
-                    return Text('');
+                    return IconButton(icon: Icon(Icons.notifications,color: Colors.transparent,), onPressed: () {});
                   }
                   return Padding(
                     padding: const EdgeInsets.only(right: 10),
@@ -148,7 +222,8 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                                 borderRadius: BorderRadius.circular(5.0)
                             ),
                             child: Center(
-                                child: Text('${snapshot?.data?.docs?.length}',style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold,fontSize: 17))),
+                                child: Text('${snapshot?.data?.docs?.length == 0 ? "0" : snapshot?.data?.docs?.length}',
+                                    style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold,fontSize: 17))),
                           )
                         ],
                       ),
@@ -167,7 +242,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                 child: Center(
                   child: Marquee(
                     text: "               Un service à votre écoute 24h/24 7j/7",
-                    style: TextStyle(color: Colors.red, fontSize: 17.0),
+                    style: TextStyle(color: Colors.green, fontSize: 17.0),
                     scrollAxis: Axis.horizontal,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     blankSpace: 5.0,
@@ -202,7 +277,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
         )
             : Container(
           width: MediaQuery.of(context).size.width,
-          color: Colors.redAccent,
+          color: Colors.blueGrey,
           height: 45,
           child: TextButton(
               onPressed: () {
@@ -265,11 +340,40 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
               child: Container(
                 child: Column(
                   children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      color: Colors.grey,
-                      height: 150,
-                      child: Text('${gzsList[gzsList.keys.toList()[i]][2]}'),
+                    CachedNetworkImage(
+                      imageBuilder: (context, imageProvider) =>
+                          Container(
+                            height: 150,
+                            decoration: BoxDecoration(
+                              //border:Border.all(width: 1, color: Color.fromRGBO(14,47,68,1)),
+                              image: DecorationImage(
+                                  image: imageProvider,
+                                  fit: BoxFit.cover),
+                            ),
+                          ),
+
+                      imageUrl: '${gzsList[gzsList.keys.toList()[i]][2]}',
+                      progressIndicatorBuilder: (context, url, downloadProgress) {
+                        return Container(
+                          margin: const EdgeInsets.only(left: 5.0),
+                          height: 150,
+                          child: Center(
+                            child: CircularProgressIndicator(
+                              value: downloadProgress.progress,
+                              valueColor: AlwaysStoppedAnimation(
+                                  Color.fromRGBO(
+                                      14, 47, 68, 1)),
+                            ),
+                          ),
+                        );
+                      },
+                      errorWidget: (context, url, object) {
+                        return Container(
+                          margin: const EdgeInsets.only(left: 5.0),
+                          height: 150,
+                          child: Center(child: Icon(Icons.photo)),
+                        );
+                      },
                     ),
 
                     Text('${gzsList.keys.toList()[i]}'),
@@ -319,7 +423,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       return GridView.builder(
         shrinkWrap: true,
           itemCount: persistentStore.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2,childAspectRatio: 0.6),
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2,childAspectRatio: 0.59),
           itemBuilder: (context, i){
           //WHEN YOU PUT i after context param IT DO AN INFITE LIST
             return Card(
@@ -330,17 +434,53 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
               child: Container(
                 child: Column(
                   children: [
-                    Container(
-                      margin: const EdgeInsets.only(top: 5),
-                      color: Colors.grey,
-                      height: 150,
-                      child: Text('${persistentStore[persistentStore.keys.toList()[i]][2]}'),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 5),
+                      child: CachedNetworkImage(
+                        imageBuilder: (context, imageProvider) =>
+                            Container(
+                              height: 150,
+                              decoration: BoxDecoration(
+                                //border:Border.all(width: 1, color: Color.fromRGBO(14,47,68,1)),
+                                image: DecorationImage(
+                                    image: imageProvider,
+                                    fit: BoxFit.cover),
+                              ),
+                            ),
+
+                        imageUrl: '${persistentStore[persistentStore.keys.toList()[i]][2]}',
+                        progressIndicatorBuilder: (context, url, downloadProgress) {
+                          return Container(
+                            margin: const EdgeInsets.only(left: 5.0),
+                            height: 150,
+                            child: Center(
+                              child: CircularProgressIndicator(
+                                value: downloadProgress.progress,
+                                valueColor: AlwaysStoppedAnimation(
+                                    Color.fromRGBO(
+                                        14, 47, 68, 1)),
+                              ),
+                            ),
+                          );
+                        },
+                        errorWidget: (context, url, object) {
+                          return Container(
+                            margin: const EdgeInsets.only(left: 5.0),
+                            height: 150,
+                            child: Center(child: Text('')),
+                          );
+                        },
+                      ),
                     ),
 
-                    Text('${persistentStore.keys.toList()[i]}'),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: Text('${persistentStore.keys.toList()[i]}'),
+                    ),
+
 
                     Padding(
-                      padding: const EdgeInsets.only(top: 15),
+                      padding: const EdgeInsets.only(top: 22),
                       child: updatePrice(
                         checked: persistentStore[persistentStore.keys.toList()[i]][0],
                           oldPrice: persistentStore[persistentStore.keys.toList()[i]][4],
@@ -349,7 +489,7 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
                           key: persistentStore.keys.toList()[i]),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(top: 10),
+                      padding: const EdgeInsets.only(top: 0),
                       child: CheckboxListTile(
                         activeColor: Colors.green,
                        // title: Text('${persistentStore.keys.toList()[i]}'),
@@ -580,5 +720,49 @@ class _ClientHomePageState extends State<ClientHomePage> with TickerProviderStat
       ..setAction(action.Action.ACTION_DIAL)
       ..setData(Uri(scheme: 'tel', path: '+2250153441343'))
       ..startActivity().catchError((e) => print(e));
+  }
+
+  disconnection({String msg}){
+    return showAnimatedDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return Center(
+          child: SingleChildScrollView(
+            child: AlertDialog(
+              shape: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.0),
+                  borderSide: BorderSide.none
+              ),
+              title: new Text(''),
+              content: Center(child: new Text(msg, textAlign: TextAlign.center)),
+              actions: <Widget>[FlatButton(
+                child: new Text('Non',style: TextStyle(color: Colors.grey[800])),
+                onPressed: () => Navigator.pop(context),
+              ),
+                FlatButton(
+                  child: new Text('Oui',style: TextStyle(color: Colors.grey),),
+                  onPressed: () async {
+                    await FirebaseAuth.instance.signOut();
+                    Navigator.pop(context);
+                    Navigator.pop(context);
+                    Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) => SplashScreenPage()
+                        )
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+      animationType: DialogTransitionType.slideFromTopFade,
+      curve: Curves.easeOut,
+      duration: Duration(milliseconds: 500),
+    );
+
   }
 }

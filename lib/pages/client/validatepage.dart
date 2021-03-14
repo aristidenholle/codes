@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:animate_do/animate_do.dart ' as fade;
 import 'package:animate_do/animate_do.dart';
 import 'package:awesome_dialog/awesome_dialog.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:date_time_picker/date_time_picker.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -164,7 +165,7 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
           child: ListView(
             children: [
               Container(
-                height:  editCityOrCommuneOrQuarter == false ?  200 :  302,
+                height:  editCityOrCommuneOrQuarter == false ?  200 :  310,
                 child: StreamBuilder(
                   stream: FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser.uid).snapshots(),
                   builder: (context, AsyncSnapshot<DocumentSnapshot> user) {
@@ -185,13 +186,20 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                       color: userDataNotDefined == true ? Colors.red[100] : Colors.white,
                       child: Column(
                         children: [
-                          Container(
-                            margin: const EdgeInsets.only(left: 10, top: 15),
-                            child: (user.data.data() != null || user.data.data()["userName"] != null) ? Row(
-                              children: [
-                                Text("${user.data.data()["userName"]}",style: TextStyle(fontWeight: FontWeight.bold))
-                              ],
-                            ) : Text('Nom et Prénom'),
+                          Row(
+                            children: [
+                              TextButton.icon(
+                                  onPressed: (){
+                                    return editDialog(
+                                        oldValue:
+                                    (user.data.data() != null && user.data.data()["userName"] != null ) ? user.data.data()["userName"] : "", keyType: 'userName');
+
+                                  }, icon: Icon( (user.data.data() != null && user.data.data()["userName"] != null ) ?
+                              Icons.call : Icons.edit),
+
+                                  label: Text((user.data.data() != null && user.data.data()["userName"] != null)  ?
+                                  " ${user.data.data()["userName"]}" :  'Nom et prénom')),
+                            ],
                           ),
 
                           Row(
@@ -413,8 +421,8 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                 FirebaseFirestore.instance.collection("users").doc(FirebaseAuth.instance.currentUser.uid)
                     .get()
                     .then((value){
-                      if(value.data() != null && value.data()['userName'].toString().isNotEmpty && value.data()['phoneNumber'].toString().isNotEmpty &&
-                          value.data()['userLocation'].toString().isNotEmpty){
+                      if(value.data() != null && value.data()['userName'] != null && value.data()['phoneNumber']!= null &&
+                          value.data()['userLocation'] != null){
                         if(reservationTypeChosen == "Maintenant"){
                           return alertToShow(msg: "Vous confirmez votre achat?",
                               userNumber: value.data()['phoneNumber'],userLocation: value.data()['userLocation'],
@@ -484,11 +492,43 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                height: 70,
-                width: 80,
-                color: Colors.grey,
-                child: Text('${listGzChosen[listGzChosen.keys.toList()[i]][1]}'),
+              CachedNetworkImage(
+                imageBuilder: (context, imageProvider) =>
+                    Container(
+                      height: 70,
+                      width: 80,
+                      decoration: BoxDecoration(
+                        //border:Border.all(width: 1, color: Color.fromRGBO(14,47,68,1)),
+                        image: DecorationImage(
+                            image: imageProvider,
+                            fit: BoxFit.cover),
+                      ),
+                    ),
+
+                imageUrl: '${listGzChosen[listGzChosen.keys.toList()[i]][1]}',
+                progressIndicatorBuilder: (context, url, downloadProgress) {
+                  return Container(
+                    margin: const EdgeInsets.only(left: 5.0),
+                    height: 70,
+                    width: 80,
+                    child: Center(
+                      child: CircularProgressIndicator(
+                        value: downloadProgress.progress,
+                        valueColor: AlwaysStoppedAnimation(
+                            Color.fromRGBO(
+                                14, 47, 68, 1)),
+                      ),
+                    ),
+                  );
+                },
+                errorWidget: (context, url, object) {
+                  return Container(
+                    margin: const EdgeInsets.only(left: 5.0),
+                    height: 70,
+                    width: 80,
+                    child: Center(child: Icon(Icons.photo)),
+                  );
+                },
               ),
               Expanded(
                 child: Padding(
@@ -626,15 +666,16 @@ class _ValidateOrderPageState extends State<ValidateOrderPage> with TickerProvid
                             }
                             : (value) {
                               if (value.isEmpty) {
-                                return 'Entrez votre ${keyType == 'userLocation' ? "Localité" : keyType == 'commune' ? "commune" :
-                                keyType == 'quarter' ? "quarter" : (keyType == 'phoneNumber' || keyType == 'secondNumber' ) ? "numéro" : ''}';
+                                return 'Entrez votre ${keyType == 'userName' ? "Nom et prénom" : keyType == 'userLocation' ?
+                                "Localité" : keyType == 'commune' ? "Commune" :
+                                keyType == 'quarter' ? "Quarter" : (keyType == 'phoneNumber' || keyType == 'secondNumber' ) ? "numéro" : ''}';
                               } else if (!regExp.hasMatch(value)) {
                                 return "Votre saisie est invalide";
                               }
                               return null;
                             },
                             decoration: InputDecoration(
-                                hintText: 'Entrez votre ${keyType == 'city' ? "ville" : keyType == 'commune' ? "commune" :
+                                hintText: 'Entrez votre ${keyType == 'userName' ? "nom et prénom" : keyType == 'city' ? "ville" : keyType == 'commune' ? "commune" :
                                 keyType == 'quarter' ? "quarter" : (keyType == 'phoneNumber' || keyType == 'secondNumber' ) ? "numéro" : ''}'
                             ),
                           ),

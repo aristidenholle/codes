@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 
 class OrderTrackPage extends StatefulWidget {
   @override
@@ -16,6 +18,11 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
         elevation: 0.0,
         title: Text('Votre commande'),
         centerTitle: true,
+        actions: [
+          IconButton(icon: Icon(Icons.history,color: Colors.white), onPressed: (){
+
+          })
+        ],
       ),
 
       body: Container(
@@ -37,7 +44,7 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
               );
             }else if(snapshot.data.docs.length == 0){
               return Center(
-                child: Text("Aucun commande"),
+                child: Text("Vous n'avez aucune commande"),
               );
             }
 
@@ -48,13 +55,33 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
               itemCount: snapshot.data.docs.length,
               itemBuilder: (context, i){
                 return Card(
+                  color: (snapshot.data.docs[i].data()['confirmed'] != null && snapshot.data.docs[i].data()['confirmed'] == 'yes')
+                  ? Colors.green[200]: Colors.white,
                   child: ExpansionTile(
-                      title: (snapshot.data.docs[i].data()['confirmed'] != null && snapshot.data.docs[i].data()['confirmed'] == null)
+                      title: (snapshot.data.docs[i].data()['confirmed'] != null && snapshot.data.docs[i].data()['confirmed'] == 'yes')
                           ? Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        mainAxisAlignment: MainAxisAlignment.start,
                         children: [
                           Text('Confirmée'),
-                          Icon(Icons.remove_done, color: Colors.white)
+                          Padding(
+                            padding: const EdgeInsets.only(left: 35),
+                            child: InkWell(
+                              onTap: (){
+                                Fluttertoast.showToast(
+                                  backgroundColor: Colors.blueGrey,
+                                    msg: 'Veuillez taper deux fois pour supprimer!');
+                              },
+                                onDoubleTap: (){
+                                  FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
+                                      .collection("Historic")
+                                      .doc().set({
+                                    "orderId":snapshot.data.docs[i].id,
+                                  }).catchError((err) => print('error to set $err'));
+                                  FirebaseFirestore.instance.collection('users').doc(FirebaseAuth.instance.currentUser.uid)
+                                      .collection("reservation").doc(snapshot.data.docs[i].id).delete();
+                                },
+                                child: Icon(Icons.delete, color: Colors.redAccent)),
+                          )
                         ],
                       )
                           :  Row(
@@ -103,8 +130,41 @@ class _OrderTrackPageState extends State<OrderTrackPage> with TickerProviderStat
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            Container(
-              child: Text('${order[order.keys.toList()[i]][1]}'),
+            CachedNetworkImage(
+              imageBuilder: (context, imageProvider) =>
+                  Container(
+                    height: 60,
+                    width: 70,
+                    decoration: BoxDecoration(
+                      //border:Border.all(width: 1, color: Color.fromRGBO(14,47,68,1)),
+                      image: DecorationImage(
+                          image: imageProvider,
+                          fit: BoxFit.cover),
+                    ),
+                  ),
+
+              imageUrl: '${order[order.keys.toList()[i]][1]}',
+              progressIndicatorBuilder: (context, url, downloadProgress) {
+                return Container(
+                  margin: const EdgeInsets.only(left: 5.0),
+                  height: 70,
+                  child: Center(
+                    child: CircularProgressIndicator(
+                      value: downloadProgress.progress,
+                      valueColor: AlwaysStoppedAnimation(
+                          Color.fromRGBO(
+                              14, 47, 68, 1)),
+                    ),
+                  ),
+                );
+              },
+              errorWidget: (context, url, object) {
+                return Container(
+                  margin: const EdgeInsets.only(left: 5.0),
+                  height: 70,
+                  child: Center(child: Icon(Icons.photo)),
+                );
+              },
             ),
             Container(
               child: Text('${order.keys.toList()[i]}'),
